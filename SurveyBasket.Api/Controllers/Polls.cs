@@ -11,15 +11,14 @@ namespace SurveyBasket.Api.Controllers
         private readonly IPollService _pollService = pollService;
 
         [HttpGet("")]
-        public IActionResult GetAll()
+        public async Task<IActionResult> GetAll()
         {
-
-            var polls = _pollService.GetAll();
+            var polls = await _pollService.GetAllAsync();
             var pollsDto = polls.Adapt<IEnumerable<PollResponse>>();
             return Ok(pollsDto);
         }
         [HttpGet("{id}")]
-        public IActionResult Get(int id)
+        public async Task<IActionResult> Get(int id)
         {
             #region local Mapster configration
             //var config = new TypeAdapterConfig();
@@ -31,35 +30,43 @@ namespace SurveyBasket.Api.Controllers
             //var pollDto = poll.Adapt<PollResponse>(config);
             #endregion
 
-            var poll = _pollService.Get(id);
+            var poll = await _pollService.GetAsync(id);
             var pollDto = poll.Adapt<PollResponse>();
             return poll is null ? NotFound() : Ok(pollDto);
         }
 
         [HttpPost("")]
-        public IActionResult Add(CreatedPollRequest poll)
+        public async Task<IActionResult> Add(PollRequest poll,CancellationToken cancellationToken)
         {
-            var addPoll = _pollService.Add(poll.Adapt<Poll>());
+            var addPoll = await _pollService.AddAsync(poll.Adapt<Poll>(),cancellationToken);
             return CreatedAtAction(nameof(Add), new { id = addPoll.Id }, addPoll);
         }
         [HttpPut("{id}")]
-        public IActionResult Update(int id, CreatedPollRequest poll)
+        public async Task<IActionResult> Update(int id, PollRequest poll, CancellationToken cancellationToken)
         {
-            var isUpdated = _pollService.Update(id, poll.Adapt<Poll>());
+            var isUpdated = await _pollService.UpdateAsync(id, poll.Adapt<Poll>(),cancellationToken);
             if (!isUpdated)
                 return NotFound();
             return NoContent();
         }
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
         {
-            var isDeleted = _pollService.Delete(id);
+            var isDeleted = await _pollService.DeleteAsync(id,cancellationToken);
             if (!isDeleted)
                 return NotFound();
             return NoContent();
         }
+        [HttpPut("{id}/togglePublish")]
+        public async Task<IActionResult> TogglePublish(int id, CancellationToken cancellationToken)
+        {
+            var isToggled = await _pollService.TogglePublishAsync(id,cancellationToken);
+            if (!isToggled)
+                return NotFound();
+            return NoContent();
+        }
         [HttpPost("Test")]
-        public IActionResult Test([FromBody] CreatedPollRequest poll)
+        public IActionResult Test([FromBody] PollRequest poll)
         {
             return Ok(poll);
         }
