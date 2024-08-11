@@ -1,8 +1,8 @@
-﻿namespace SurveyBasket.Api.Contract.Validation
+﻿namespace SurveyBasket.Api.Contract.Poll
 {
     public class PollRequestValidation : AbstractValidator<PollRequest>
     {
-        public PollRequestValidation() 
+        public PollRequestValidation()
         {
             RuleFor(p => p.Title)
                    .NotEmpty()
@@ -15,12 +15,12 @@
             RuleFor(p => p.StartAt)
                 .NotEmpty()
                 .GreaterThanOrEqualTo(DateOnly.FromDateTime(DateTime.Today))
-                .WithMessage("{PropertyName} must be >= "+$"{DateOnly.FromDateTime(DateTime.Today)}");
+                .WithMessage("{PropertyName} must be >= " + $"{DateOnly.FromDateTime(DateTime.Today)}");
 
             RuleFor(p => p)
                 .Must(HasValidDate)
                 .WithName(nameof(PollRequest.EndAt))
-                .WithMessage(p=> "{PropertyName} must be >= " + $"{p.StartAt}");
+                .WithMessage(p => "{PropertyName} must be >= " + $"{p.StartAt}");
 
         }
 

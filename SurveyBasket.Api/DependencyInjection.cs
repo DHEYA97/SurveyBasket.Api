@@ -1,8 +1,12 @@
 ﻿using FluentValidation.AspNetCore;
 using MapsterMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using SurveyBasket.Api.Authentication;
 using SurveyBasket.Api.Persistence;
 using System.Reflection;
+using System.Text;
 
 namespace SurveyBasket.Api
 {
@@ -11,29 +15,31 @@ namespace SurveyBasket.Api
         public static IServiceCollection AddDependency(this IServiceCollection services,IConfiguration configuration)
         {
             services.AddControllers();
-            services.AddDbContext(configuration);
+            services.AddDbContextConfig(configuration)
+                    .AddAuthConfig();
 
-            services.AddSwagger()
-                    .AddMapster()
-                    .AddFluentValidation()
-                    .AddServices();
+            services.AddSwaggerConfig()
+                    .AddMapsterConfig()
+                    .AddFluentValidationConfig()
+                    .AddServicesConfig();
 
 
             return services;
         }
-        public static IServiceCollection AddServices(this IServiceCollection services)
+        private static IServiceCollection AddServicesConfig(this IServiceCollection services)
         {
             services.AddScoped<IPollService, PollService>();
+            services.AddScoped<IAuthService, AuthService>();
             return services;
         }
-        public static IServiceCollection AddSwagger(this IServiceCollection services)
+        private static IServiceCollection AddSwaggerConfig(this IServiceCollection services)
         {
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             services.AddEndpointsApiExplorer();
             services.AddSwaggerGen();
             return services;
         }
-        public static IServiceCollection AddMapster(this IServiceCollection services)
+        private static IServiceCollection AddMapsterConfig(this IServiceCollection services)
         {
             // Add Mapster Global Configration
             var mappConfig = TypeAdapterConfig.GlobalSettings;
@@ -41,7 +47,7 @@ namespace SurveyBasket.Api
             services.AddSingleton<IMapper>(new Mapper(mappConfig));
             return services;
         }
-        public static IServiceCollection AddFluentValidation(this IServiceCollection services)
+        private static IServiceCollection AddFluentValidationConfig(this IServiceCollection services)
         {
             // Add FluentValidation
             services.AddFluentValidationAutoValidation()
@@ -49,11 +55,42 @@ namespace SurveyBasket.Api
             return services;
         }
 
-        public static IServiceCollection AddDbContext(this IServiceCollection services,IConfiguration configuration)
+        private static IServiceCollection AddDbContextConfig(this IServiceCollection services,IConfiguration configuration)
         {
             var connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("DefaultConnection String Not Found");
             services.AddDbContext<ApplicationDbContext>(option =>
             option.UseSqlServer(connectionString));
+            return services;
+        }
+
+        //Jwt
+        private static IServiceCollection AddAuthConfig(this IServiceCollection services)
+        {
+            services.AddSingleton<IJwtProvider, JwtProvider>();
+
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>();
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(o =>
+            {
+                o.SaveToken = true;
+                o.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey = true,
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("J7MfAb4WcAIMkkigVtIepIILOVJEjAcB")),
+                    ValidIssuer = "SurveyBasketApp",
+                    ValidAudience = "SurveyBasketApp users"
+                };
+            });
+
             return services;
         }
     }

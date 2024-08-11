@@ -1,5 +1,4 @@
-﻿
-namespace SurveyBasket.Api.Contract.Responce
+﻿namespace SurveyBasket.Api.Contract.Poll
 {
     public record PollResponse(
          int Id,

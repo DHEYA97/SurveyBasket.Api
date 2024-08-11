@@ -1,5 +1,4 @@
-﻿
-namespace SurveyBasket.Api.Contract.Request
+﻿namespace SurveyBasket.Api.Contract.Poll
 {
     public record PollRequest(
          string Title,
@@ -7,5 +6,5 @@ namespace SurveyBasket.Api.Contract.Request
          bool IsPublished,
          DateOnly StartAt,
          DateOnly EndAt
-        );  
+        );
 }
