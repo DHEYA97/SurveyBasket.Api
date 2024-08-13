@@ -6,42 +6,28 @@ namespace SurveyBasket.Api.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class Auth(IAuthService authService,
-                      IOptions<JwtOptions> options,
-                      IOptionsSnapshot<JwtOptions> optionsSnapshot,
-                      IOptionsMonitor<JwtOptions> optionsMonitor
+    public class Auth(IAuthService authService
                         ) : ControllerBase
     {
         private readonly IAuthService _authService = authService;
-        private readonly IOptions<JwtOptions> _jwtOptions = options;
-        private readonly IOptionsSnapshot<JwtOptions> _optionsSnapshot = optionsSnapshot;
-        private readonly IOptionsMonitor<JwtOptions> _optionsMonitor = optionsMonitor;
         [HttpPost("")]
         public async Task<IActionResult> Login(LoginRequest Request,CancellationToken cancellationToken = default)
         {       
            var auth = await _authService.GetTokenAsync(Request.Email, Request.Password,cancellationToken);
            return auth is null ? BadRequest("Email/Password Not Valid") : Ok(auth);
         }
-        [HttpGet]
-        public IActionResult Get() 
+        [HttpPost("RefreshToken")]
+        public async Task<IActionResult> RefreshToken(RefreshTokenRequest Request, CancellationToken cancellationToken = default)
         {
-            var j1 = new
-            {
-                _jwtOptions = _jwtOptions.Value.Expirition,
-                _optionsSnapshot = _optionsSnapshot.Value.Expirition,
-                _optionsMonitor = _optionsMonitor.CurrentValue.Expirition
-            };
-            Thread.Sleep(5000);
-            var j2 = new
-            {
-                _jwtOptions = _jwtOptions.Value.Expirition,
-                _optionsSnapshot = _optionsSnapshot.Value.Expirition,
-                _optionsMonitor = _optionsMonitor.CurrentValue.Expirition
-            };
-            return Ok(new
-            {
-                j1,j2
-            });
+            var auth = await _authService.GetRefreshTokenAsync(Request.Token, Request.RefreshToken, cancellationToken);
+            return auth is null ? BadRequest("Token Not Valid") : Ok(auth);
         }
+        [HttpPost("revoke-refresh-token")]
+        public async Task<IActionResult> RevokeRefreshToken(RefreshTokenRequest Request, CancellationToken cancellationToken = default)
+        {
+            var isRevoke = await _authService.RevokeRefreshTokenAsync(Request.Token, Request.RefreshToken, cancellationToken);
+            return isRevoke ? Ok() : BadRequest("Operation Not Complete");
+        }
+
     }
 }
