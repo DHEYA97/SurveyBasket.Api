@@ -16,7 +16,8 @@ namespace SurveyBasket.Api
         {
             services.AddControllers();
             services.AddDbContextConfig(configuration)
-                    .AddAuthConfig(configuration);
+                    .AddAuthConfig(configuration)
+                    .AddCorsConfig(configuration);
 
             services.AddSwaggerConfig()
                     .AddMapsterConfig()
@@ -105,6 +106,32 @@ namespace SurveyBasket.Api
                 };
             });
 
+            return services;
+        }
+        private static IServiceCollection AddCorsConfig(this IServiceCollection services, IConfiguration configuration)
+        {
+            var allowOrigin = configuration.GetSection("AllowOrigin").Get<string[]>();
+
+            
+            services.AddCors(option => {
+                                option.AddDefaultPolicy(bulder =>
+                                                        bulder.AllowAnyOrigin()
+                                                              .AllowAnyMethod()
+                                                              .AllowAnyHeader()
+
+                                //Add from AppSetting
+                                //.WithOrigins(allowOrigin)
+                                );
+                                //More Than One Policy
+                                //option.AddPolicy("MyPolicy02", bulder =>
+                                //                                        bulder.AllowAnyOrigin()
+                                //                                                .AllowAnyMethod()
+                                //                                                .AllowAnyHeader()
+
+                                                
+                                //                );
+            }
+                             );
             return services;
         }
     }

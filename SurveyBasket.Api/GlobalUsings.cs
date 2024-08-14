@@ -7,3 +7,5 @@ global using FluentValidation;
 
 global using SurveyBasket.Api.Entities;
 global using SurveyBasket.Api.Services;
+global using SurveyBasket.Api.Abstractions;
+global using SurveyBasket.Api.Errors;

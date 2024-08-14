@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Options;
+using SurveyBasket.Api.Abstractions;
 using SurveyBasket.Api.Authentication;
 using SurveyBasket.Api.Contract.Auth;
 
@@ -11,22 +12,22 @@ namespace SurveyBasket.Api.Controllers
     {
         private readonly IAuthService _authService = authService;
         [HttpPost("")]
-        public async Task<IActionResult> Login(LoginRequest Request,CancellationToken cancellationToken = default)
-        {       
-           var auth = await _authService.GetTokenAsync(Request.Email, Request.Password,cancellationToken);
-           return auth is null ? BadRequest("Email/Password Not Valid") : Ok(auth);
+        public async Task<IActionResult> Login([FromBody] LoginRequest Request,CancellationToken cancellationToken = default)
+        {
+            var authResult = await _authService.GetTokenAsync(Request.Email, Request.Password,cancellationToken);
+            return authResult.IsSuccess ? Ok(authResult.Value) : authResult.ToProblem();
         }
         [HttpPost("RefreshToken")]
-        public async Task<IActionResult> RefreshToken(RefreshTokenRequest Request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenRequest Request, CancellationToken cancellationToken = default)
         {
-            var auth = await _authService.GetRefreshTokenAsync(Request.Token, Request.RefreshToken, cancellationToken);
-            return auth is null ? BadRequest("Token Not Valid") : Ok(auth);
+            var authResult = await _authService.GetRefreshTokenAsync(Request.Token, Request.RefreshToken, cancellationToken);
+            return authResult.IsSuccess ? Ok(authResult.Value) : authResult.ToProblem();
         }
         [HttpPost("revoke-refresh-token")]
-        public async Task<IActionResult> RevokeRefreshToken(RefreshTokenRequest Request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> RevokeRefreshToken([FromBody] RefreshTokenRequest Request, CancellationToken cancellationToken = default)
         {
             var isRevoke = await _authService.RevokeRefreshTokenAsync(Request.Token, Request.RefreshToken, cancellationToken);
-            return isRevoke ? Ok() : BadRequest("Operation Not Complete");
+            return isRevoke.IsSuccess ? Ok() : isRevoke.ToProblem();
         }
 
     }
