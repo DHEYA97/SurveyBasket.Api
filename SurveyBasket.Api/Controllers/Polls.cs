@@ -8,7 +8,7 @@ namespace SurveyBasket.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
+    [Authorize]
     
     //[DisableCors]
    // [EnableCors("MyPolicy")]
@@ -44,9 +44,11 @@ namespace SurveyBasket.Api.Controllers
         public async Task<IActionResult> Add([FromBody] PollRequest request,
         CancellationToken cancellationToken)
         {
-            var newPoll = await _pollService.AddAsync(request, cancellationToken);
+            var newPollResult = await _pollService.AddAsync(request, cancellationToken);
 
-            return CreatedAtAction(nameof(Get), new { id = newPoll.Id }, newPoll);
+            return newPollResult.IsSuccess 
+                ? CreatedAtAction(nameof(Get), new { id = newPollResult.Value.Id }, newPollResult.Value) 
+                : newPollResult.ToProblem();
         }
 
         [HttpPut("{id}")]

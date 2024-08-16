@@ -17,7 +17,8 @@ namespace SurveyBasket.Api
             services.AddControllers();
             services.AddDbContextConfig(configuration)
                     .AddAuthConfig(configuration)
-                    .AddCorsConfig(configuration);
+                    .AddCorsConfig(configuration)
+                    .AddExceptionHandlerConfig();
 
             services.AddSwaggerConfig()
                     .AddMapsterConfig()
@@ -31,6 +32,7 @@ namespace SurveyBasket.Api
         {
             services.AddScoped<IPollService, PollService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IQuestionService, QuestionService>();
             return services;
         }
         private static IServiceCollection AddSwaggerConfig(this IServiceCollection services)
@@ -132,6 +134,12 @@ namespace SurveyBasket.Api
                                 //                );
             }
                              );
+            return services;
+        }
+        private static IServiceCollection AddExceptionHandlerConfig(this IServiceCollection services)
+        {
+            services.AddExceptionHandler<GlobalExceptionHandler>()
+                    .AddProblemDetails();
             return services;
         }
     }

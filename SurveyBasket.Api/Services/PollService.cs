@@ -20,19 +20,28 @@ namespace SurveyBasket.Api.Services
             var pollsResponse = await _context.Polls.AsNoTracking().ToListAsync(cancellationToken);
             return Result.Success(pollsResponse.Adapt<IEnumerable<PollResponse>>());
         }
-        public async Task<PollResponse> AddAsync(PollRequest pollRequest, CancellationToken cancellationToken = default)
+        public async Task<Result<PollResponse>> AddAsync(PollRequest pollRequest, CancellationToken cancellationToken = default)
         {
+            var isExistTitle = _context.Polls.Any(x=>x.Title == pollRequest.Title);
+            if(isExistTitle)
+               return Result.Failure<PollResponse>(PollErrors.DuplicatePollTitle);
+
             var poll = pollRequest.Adapt<Poll>();
             await _context.AddAsync(poll, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
-            return poll.Adapt<PollResponse>();
+            return Result.Success(poll.Adapt<PollResponse>());
         }
         
         public async Task<Result> UpdateAsync(int id, PollRequest pollRequest, CancellationToken cancellationToken = default)
         {
             var upPoll = await _context.Polls.FindAsync(id, cancellationToken);
             if (upPoll is null) 
-                return Result.Failure(PollErrors.PollNotFound); 
+                return Result.Failure(PollErrors.PollNotFound);
+            
+            var isExistTitle = _context.Polls.Any(x => x.Title == pollRequest.Title && x.Id != id);
+            if (isExistTitle)
+                return Result.Failure<PollResponse>(PollErrors.DuplicatePollTitle);
+
             upPoll.Title = pollRequest.Title;
             upPoll.Summary = pollRequest.Summary;
             upPoll.StartAt = pollRequest.StartAt;

@@ -1,4 +1,5 @@
 using SurveyBasket.Api;
+using SurveyBasket.Api.Middleware;
 using SurveyBasket.Api.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,4 +22,8 @@ app.UseCors(); //app.UseCors("Policy Name");
 app.UseAuthorization();
 app.MapControllers();
 
+//Handling Exception Before .Net 8
+//app.UseMiddleware<ExceptionHandlingMiddleware>();
+//Handling Exception After .Net 8
+app.UseExceptionHandler();
 app.Run();

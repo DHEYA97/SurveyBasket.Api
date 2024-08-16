@@ -8,11 +8,23 @@ namespace SurveyBasket.Api.Persistence
     public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,IHttpContextAccessor httpContextAccessor): IdentityDbContext<ApplicationUser>(options)
     {
         private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
+        public DbSet<Poll> Polls { get; set; }
+        public DbSet<Question> Questions { get; set; }
+        public DbSet<Answer> Answers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            //Add Global
+            //Add Global Configurations
             modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+            // Change OnDelete Behavior
+            var cascadeFk = modelBuilder.Model
+                                        .GetEntityTypes()
+                                        .SelectMany(t => t.GetForeignKeys())
+                                        .Where(fk => fk.DeleteBehavior == DeleteBehavior.Cascade);
+            foreach (var fk in cascadeFk)
+                fk.DeleteBehavior = DeleteBehavior.Restrict;
+
             base.OnModelCreating(modelBuilder);
         }
         public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -33,6 +45,5 @@ namespace SurveyBasket.Api.Persistence
             }
             return base.SaveChangesAsync(cancellationToken);
         }
-        public DbSet<Poll> Polls { get; set; }
     }
 }
