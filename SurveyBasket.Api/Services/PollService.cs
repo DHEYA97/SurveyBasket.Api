@@ -2,6 +2,7 @@
 using SurveyBasket.Api.Contract.Poll;
 using SurveyBasket.Api.Entities;
 using SurveyBasket.Api.Persistence;
+using System.Collections.Generic;
 
 namespace SurveyBasket.Api.Services
 {
@@ -17,8 +18,20 @@ namespace SurveyBasket.Api.Services
         }
         public async Task<Result<IEnumerable<PollResponse>>> GetAllAsync(CancellationToken cancellationToken = default)
         {
-            var pollsResponse = await _context.Polls.AsNoTracking().ToListAsync(cancellationToken);
-            return Result.Success(pollsResponse.Adapt<IEnumerable<PollResponse>>());
+            var pollsResponse = await _context.Polls
+                                              .AsNoTracking()
+                                              .ProjectToType<PollResponse>()
+                                              .ToListAsync(cancellationToken);
+            return Result.Success<IEnumerable<PollResponse>>(pollsResponse);
+        }
+        public async Task<Result<IEnumerable<PollResponse>>> GetAllCurrentAsync(CancellationToken cancellationToken = default)
+        {
+            var pollsResponse = await _context.Polls
+                                              .Where(p=>p.IsPublished && p.StartAt <= DateOnly.FromDateTime(DateTime.UtcNow) && p.EndAt >= DateOnly.FromDateTime(DateTime.UtcNow))                              
+                                              .AsNoTracking()
+                                              .ProjectToType<PollResponse>()
+                                              .ToListAsync(cancellationToken);
+            return Result.Success<IEnumerable<PollResponse>>(pollsResponse);
         }
         public async Task<Result<PollResponse>> AddAsync(PollRequest pollRequest, CancellationToken cancellationToken = default)
         {

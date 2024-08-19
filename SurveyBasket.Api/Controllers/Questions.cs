@@ -39,11 +39,8 @@ namespace SurveyBasket.Api.Controllers
         {
             var newQuestionResult = await _questionService.AddAsync(pollId,request, cancellationToken);
 
-            if (newQuestionResult.IsSuccess)
-                return CreatedAtAction(nameof(Get), new { pollId, newQuestionResult.Value.Id }, newQuestionResult.Value);
-            return newQuestionResult.Error.Equals(QuestionErrors.DuplicateQuestionContent)
-                ? newQuestionResult.ToProblem(StatusCodes.Status409Conflict)
-                : newQuestionResult.ToProblem(StatusCodes.Status404NotFound);
+            return newQuestionResult.IsSuccess ? CreatedAtAction(nameof(Get), new { pollId, newQuestionResult.Value.Id }, newQuestionResult.Value)
+            : newQuestionResult.ToProblem();
 
         }
 
@@ -53,9 +50,7 @@ namespace SurveyBasket.Api.Controllers
             var isUpdatedResult = await _questionService.UpdateAsync(pollId,id, questionRequest, cancellationToken);
             return isUpdatedResult.IsSuccess 
                    ? NoContent() 
-                   : isUpdatedResult.Error.Equals(QuestionErrors.DuplicateQuestionContent)
-                       ? isUpdatedResult.ToProblem(StatusCodes.Status409Conflict) 
-                       : isUpdatedResult.ToProblem(StatusCodes.Status404NotFound);
+                   : isUpdatedResult.ToProblem();
         }
 
         [HttpPut("{id}/toggleStatus")]

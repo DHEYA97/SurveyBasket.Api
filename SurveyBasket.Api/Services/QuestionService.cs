@@ -1,4 +1,5 @@
-﻿using Azure.Core;
+﻿using Azure;
+using Azure.Core;
 using SurveyBasket.Api.Contract.Poll;
 using SurveyBasket.Api.Contract.Question;
 using SurveyBasket.Api.Controllers;
@@ -86,6 +87,28 @@ namespace SurveyBasket.Api.Services
             }
             return Result.Failure<IEnumerable<QuestionResponse>>(QuestionErrors.QuestionNotFound);
 
+        }
+        public async Task<Result<IEnumerable<QuestionResponse>>> GetAvailableAsync(int pollId, string userId, CancellationToken cancellationToken = default)
+        {
+            var hasVote = await _context.Votes.AnyAsync(v => v.PollId == pollId && v.UserId == userId,cancellationToken);
+            if (hasVote) 
+                return Result.Failure<IEnumerable<QuestionResponse>>(VoteErrors.DuplicatedVote);
+            var isExistPoll = await _context.Polls.AnyAsync(p => p.Id == pollId && p.IsPublished && p.StartAt <= DateOnly.FromDateTime(DateTime.UtcNow) && p.EndAt >= DateOnly.FromDateTime(DateTime.UtcNow));
+            if(isExistPoll)
+                return Result.Failure<IEnumerable<QuestionResponse>>(PollErrors.PollNotFound);
+            var questions = await _context.Questions
+                                          .Where(q => q.PollId == pollId && q.IsActive)
+                                          .Include(q => q.Answers)
+                                          .Select(q => new QuestionResponse(
+                                                                    q.Id,
+                                                                    q.Content,
+                                                                    q.Answers.Where(a=>a.IsActive)
+                                                                     .Select(a=>new AnswerResponse(a.Id,a.Content,a.IsActive))
+                                                                     ))
+                                          .AsNoTracking()
+                                          .ToListAsync(cancellationToken);
+
+            return Result.Success<IEnumerable<QuestionResponse>>(questions);
         }
         public async Task<Result<QuestionResponse>> AddAsync(int pollId, QuestionRequest questionRequest, CancellationToken cancellationToken = default)
         {

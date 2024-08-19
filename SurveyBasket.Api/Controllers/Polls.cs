@@ -22,6 +22,12 @@ namespace SurveyBasket.Api.Controllers
             var pollsResult = await _pollService.GetAllAsync();
             return  Ok(pollsResult.Value);
         }
+        [HttpGet("current")]
+        public async Task<IActionResult> GetAllCurrent()
+        {
+            var pollsResult = await _pollService.GetAllCurrentAsync();
+            return Ok(pollsResult.Value);
+        }
         [HttpGet("{id}")]
         public async Task<IActionResult> Get([FromRoute]int id)
         {
