@@ -29,7 +29,9 @@ namespace SurveyBasket.Api.Services
             {
                 PollId = pollId,
                 UserId = userId,
-                VoteAnswers = request.Answers.Adapt<IEnumerable<VoteAnswer>>().ToList()
+                VoteAnswers = request.Answers.Adapt<IEnumerable<VoteAnswer>>().ToList(),
+                SubmittedOn = DateTime.UtcNow,
+                
             };
             await _context.Votes.AddAsync(vote,cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
