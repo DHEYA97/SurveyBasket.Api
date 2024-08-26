@@ -1,10 +1,12 @@
 ﻿using FluentValidation.AspNetCore;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using SurveyBasket.Api.Authentication;
 using SurveyBasket.Api.Persistence;
+using SurveyBasket.Api.Settinges;
 using System.Reflection;
 using System.Text;
 
@@ -15,15 +17,19 @@ namespace SurveyBasket.Api
         public static IServiceCollection AddDependency(this IServiceCollection services,IConfiguration configuration)
         {
             services.AddControllers();
+            
             services.AddDbContextConfig(configuration)
                     .AddAuthConfig(configuration)
                     .AddCorsConfig(configuration)
-                    .AddExceptionHandlerConfig();
+                    .AddMailConfig(configuration);
 
             services.AddSwaggerConfig()
                     .AddMapsterConfig()
                     .AddFluentValidationConfig()
-                    .AddServicesConfig();
+                    .AddServicesConfig()
+                    .AddCacheConfig()
+                    .AddExceptionHandlerConfig()
+                    .AddHttpContextAccessorConfig();
 
 
             return services;
@@ -35,6 +41,8 @@ namespace SurveyBasket.Api
             services.AddScoped<IQuestionService, QuestionService>();
             services.AddScoped<IVoteService, VoteService>();
             services.AddScoped<IResultService, ResultService>();
+            services.AddScoped<IEmailSender, EmailService>();
+            //services.AddScoped<ICacheService, CacheService>();
             return services;
         }
         private static IServiceCollection AddSwaggerConfig(this IServiceCollection services)
@@ -72,7 +80,8 @@ namespace SurveyBasket.Api
         private static IServiceCollection AddAuthConfig(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
 
             services.AddSingleton<IJwtProvider, JwtProvider>();
 
@@ -110,6 +119,9 @@ namespace SurveyBasket.Api
                 };
             });
 
+
+            //Add Idintity configration
+            services.AddIdentityConfig();
             return services;
         }
         private static IServiceCollection AddCorsConfig(this IServiceCollection services, IConfiguration configuration)
@@ -142,6 +154,31 @@ namespace SurveyBasket.Api
         {
             services.AddExceptionHandler<GlobalExceptionHandler>()
                     .AddProblemDetails();
+            return services;
+        }
+        private static IServiceCollection AddCacheConfig(this IServiceCollection services)
+        {
+            services.AddHybridCache();
+            return services;
+        }
+        private static IServiceCollection AddIdentityConfig(this IServiceCollection services)
+        {
+            services.Configure<IdentityOptions>(Options =>
+            {
+                Options.Password.RequiredLength = 8;
+                Options.SignIn.RequireConfirmedEmail = true;
+                Options.User.RequireUniqueEmail = true;
+            });
+            return services;
+        }
+        private static IServiceCollection AddMailConfig(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<MailSetting>(configuration.GetSection(MailSetting.SectionName));
+            return services;
+        }
+        private static IServiceCollection AddHttpContextAccessorConfig(this IServiceCollection services)
+        {
+            services.AddHttpContextAccessor();
             return services;
         }
     }

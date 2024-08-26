@@ -1,4 +1,5 @@
-﻿using SurveyBasket.Api.Contract.Question;
+﻿using SurveyBasket.Api.Contract.Auth.Register;
+using SurveyBasket.Api.Contract.Question;
 
 namespace SurveyBasket.Api.Mapping
 {
@@ -12,7 +13,9 @@ namespace SurveyBasket.Api.Mapping
 
             config.NewConfig<QuestionRequest, Question>()
                   .Map(des => des.Answers, src => src.Answers.Select(answer => new Answer { Content = answer }));
-            
+
+            config.NewConfig<RegisterRequest, ApplicationUser>()
+            .Map(dest => dest.UserName, src => src.Email);
         }
     }
 }
