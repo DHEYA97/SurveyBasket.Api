@@ -1,7 +1,10 @@
+using Hangfire;
+using HangfireBasicAuthenticationFilter;
 using Serilog;
 using SurveyBasket.Api;
 using SurveyBasket.Api.Middleware;
 using SurveyBasket.Api.Persistence;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,7 +59,23 @@ app.UseAuthorization();
 ////Add OutputCache
 //app.UseOutputCache();
 #endregion
+app.UseHangfireDashboard("/jobs",new DashboardOptions
+{
+    Authorization =
+    [
+        new HangfireCustomBasicAuthenticationFilter
+        {
+            User = app.Configuration.GetValue<string>("HangfireSettings:Username"),
+            Pass = app.Configuration.GetValue<string>("HangfireSettings:Password")
+        }
+    ],
+    DashboardTitle = "Survey Basket Dashboard",
+});
 
+var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
+using var scope = scopeFactory.CreateScope();
+var notificationService = scope.ServiceProvider.GetService<INotificationService>();
+RecurringJob.AddOrUpdate("SendEmailInBackgroundJob", () => notificationService!.SendEmailInBackgroundJob(null), Cron.Daily);
 app.MapControllers();
 
 //Handling Exception Before .Net 8

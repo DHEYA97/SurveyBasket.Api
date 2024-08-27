@@ -1,4 +1,5 @@
 ﻿using FluentValidation.AspNetCore;
+using Hangfire;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity.UI.Services;
@@ -21,7 +22,8 @@ namespace SurveyBasket.Api
             services.AddDbContextConfig(configuration)
                     .AddAuthConfig(configuration)
                     .AddCorsConfig(configuration)
-                    .AddMailConfig(configuration);
+                    .AddMailConfig(configuration)
+                    .AddHangFireConfig(configuration);
 
             services.AddSwaggerConfig()
                     .AddMapsterConfig()
@@ -42,6 +44,7 @@ namespace SurveyBasket.Api
             services.AddScoped<IVoteService, VoteService>();
             services.AddScoped<IResultService, ResultService>();
             services.AddScoped<IEmailSender, EmailService>();
+            services.AddScoped<INotificationService, NotificationService>();
             //services.AddScoped<ICacheService, CacheService>();
             return services;
         }
@@ -176,10 +179,22 @@ namespace SurveyBasket.Api
             services.Configure<MailSetting>(configuration.GetSection(MailSetting.SectionName));
             return services;
         }
+        private static IServiceCollection AddHangFireConfig(this IServiceCollection services, IConfiguration configuration)
+        {
+            
+            services.AddHangfire(config => config
+                    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                    .UseSimpleAssemblyNameTypeSerializer()
+                    .UseRecommendedSerializerSettings()
+                    .UseSqlServerStorage(configuration.GetConnectionString("HangfireConnection")));
+
+            services.AddHangfireServer();
+            return services;
+        }
         private static IServiceCollection AddHttpContextAccessorConfig(this IServiceCollection services)
         {
             services.AddHttpContextAccessor();
-            return services;
+            return services; 
         }
     }
 }
