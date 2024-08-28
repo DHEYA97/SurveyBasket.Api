@@ -2,6 +2,7 @@
 using SurveyBasket.Api.Contract.Auth.Register;
 using SurveyBasket.Api.Contract.ConfirmEmail;
 using SurveyBasket.Api.Contract.ReSendConfirmEmail;
+using SurveyBasket.Api.Contract.ResetPassword;
 
 namespace SurveyBasket.Api.Controllers
 {
@@ -47,6 +48,18 @@ namespace SurveyBasket.Api.Controllers
         public async Task<IActionResult> ReSendConfirmEmail([FromBody] ReSendConfirmEmailRequest Request, CancellationToken cancellationToken = default)
         {
             var result = await _authService.ResendConfirmEmailAsync(Request);
+            return result.IsSuccess ? Ok() : result.ToProblem();
+        }
+        [HttpPost("forget-password")]
+        public async Task<IActionResult> ForgetPassword([FromBody] ReSendConfirmEmailRequest Request, CancellationToken cancellationToken = default)
+        {
+            var result = await _authService.ForgetPasswordAsync(Request);
+            return result.IsSuccess ? Ok() : result.ToProblem();
+        }
+        [HttpPost("reset-password")]
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordRequest Request, CancellationToken cancellationToken = default)
+        {
+            var result = await _authService.ConfirmResetPasswordAsync(Request);
             return result.IsSuccess ? Ok() : result.ToProblem();
         }
 
