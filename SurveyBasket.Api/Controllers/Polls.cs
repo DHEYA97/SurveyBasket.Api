@@ -1,6 +1,4 @@
 ﻿
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Cors;
 using SurveyBasket.Api.Contract.Poll;
 
 namespace SurveyBasket.Api.Controllers
@@ -8,7 +6,7 @@ namespace SurveyBasket.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     
     //[DisableCors]
    // [EnableCors("MyPolicy")]
@@ -17,18 +15,21 @@ namespace SurveyBasket.Api.Controllers
         private readonly IPollService _pollService = pollService;
 
         [HttpGet("")]
+        [HasPermission(Permissions.GetPolls)]
         public async Task<IActionResult> GetAll()
         {
             var pollsResult = await _pollService.GetAllAsync();
             return  Ok(pollsResult.Value);
         }
         [HttpGet("current")]
+        [HasPermission(Permissions.GetPolls)]
         public async Task<IActionResult> GetAllCurrent()
         {
             var pollsResult = await _pollService.GetAllCurrentAsync();
             return Ok(pollsResult.Value);
         }
         [HttpGet("{id}")]
+        [HasPermission(Permissions.GetPolls)]
         public async Task<IActionResult> Get([FromRoute]int id)
         {
             #region local Mapster configration

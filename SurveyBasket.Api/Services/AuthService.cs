@@ -8,8 +8,11 @@ using SurveyBasket.Api.Contract.ConfirmEmail;
 using SurveyBasket.Api.Contract.ReSendConfirmEmail;
 using SurveyBasket.Api.Contract.ResetPassword;
 using SurveyBasket.Api.Helpers;
+using SurveyBasket.Api.Persistence;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
+using static Org.BouncyCastle.Crypto.Engines.SM2Engine;
 
 namespace SurveyBasket.Api.Services
 {
@@ -19,7 +22,7 @@ namespace SurveyBasket.Api.Services
         IJwtProvider jwtProvider,
         IEmailSender emailSender,
         IHttpContextAccessor httpContextAccessor,
-        ILogger<AuthService> logger) : IAuthService
+        ILogger<AuthService> logger,ApplicationDbContext context) : IAuthService
     {
         private readonly UserManager<ApplicationUser> _userManager = userManager;
         private readonly SignInManager<ApplicationUser> _signInManager = signInManager;
@@ -27,6 +30,7 @@ namespace SurveyBasket.Api.Services
         private readonly IEmailSender _emailSender = emailSender;
         private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
         private readonly ILogger<AuthService> _logger = logger;
+        private readonly ApplicationDbContext _context = context;
 
         private readonly int _refreshTokenExpiredDay = 14;
         public async Task<Result<AuthResponse>> GetTokenAsync(string email, string password, CancellationToken cancellationToken = default)
@@ -37,7 +41,8 @@ namespace SurveyBasket.Api.Services
             var result = await _signInManager.PasswordSignInAsync(user,password,false,false);
             if (result.Succeeded)
             {
-                var (token, expiration) = _jwtProvider.GenerateToken(user);
+                var (userRoles, userPermissions) = await GetUserRolesAndPermissions(user, cancellationToken);
+                var (token, expiration) = _jwtProvider.GenerateToken(user,userRoles,userPermissions);
 
                 //RefreshToken
                 var refreshToken = GenerateRefreshToken();
@@ -69,7 +74,9 @@ namespace SurveyBasket.Api.Services
             if(userRefeshToken is null)
                 return Result.Failure<AuthResponse>(UserErrors.InvalidRefreshToken);
             userRefeshToken.RevokedOn = DateTime.UtcNow;
-            var (newToken, expiration) = _jwtProvider.GenerateToken(user);
+            
+            var (userRoles, userPermissions) = await GetUserRolesAndPermissions(user, cancellationToken);;
+            var (newToken, expiration) = _jwtProvider.GenerateToken(user,userRoles, userPermissions);
 
             //RefreshToken
             var newRefreshToken = GenerateRefreshToken();
@@ -144,6 +151,7 @@ namespace SurveyBasket.Api.Services
             var result = await _userManager.ConfirmEmailAsync(user,code);
             if (result.Succeeded)
             {
+                await _userManager.AddToRoleAsync(user, DefaultRoles.Member);
                 return Result.Success();
             }
             var error = result.Errors.First();
@@ -177,7 +185,6 @@ namespace SurveyBasket.Api.Services
 
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
             code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-            _logger.LogInformation("code {code}",code);
             var origin = _httpContextAccessor.HttpContext?.Request.Headers.Origin;
             Dictionary<string, string> templateModel = new Dictionary<string, string>
                                 {
@@ -217,12 +224,28 @@ namespace SurveyBasket.Api.Services
         private static string GenerateRefreshToken() => Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
         private async Task SendEmailAsync(ApplicationUser user, string code,string templateName,string title,Dictionary<string,string> templateModel)
         {
+            _logger.LogInformation("Code : {code}", code);
             var emailBody = EmailBodyBuilder.GenerateEmailBody(templateName,
                 templateModel
                 );
             //
             BackgroundJob.Enqueue(()=>_emailSender.SendEmailAsync(user.Email!, title, emailBody));
             await Task.CompletedTask;
+        }
+        private async Task<(IEnumerable<string> roles, IEnumerable<string> permissions)>GetUserRolesAndPermissions(ApplicationUser user,CancellationToken cancellationToken)
+        {
+            var userRoles = await _userManager.GetRolesAsync(user);
+
+            var userPermissions = await (from r in _context.Roles
+                                         join p in _context.RoleClaims
+                                         on r.Id equals p.RoleId
+                                         where userRoles.Contains(r.Name!)
+                                         select p.ClaimValue!
+                                         )
+                                         .Distinct()
+                                         .ToListAsync(cancellationToken);
+            _logger.LogInformation("userRoles : {userRoles} , userPermissions : {userPermissions}", JsonSerializer.Serialize(userRoles), JsonSerializer.Serialize(userPermissions));
+            return (userRoles, userPermissions);
         }
     }
 }

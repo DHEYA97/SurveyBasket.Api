@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using SurveyBasket.Api.Authentication;
+using SurveyBasket.Api.Authentication.Filters;
 using SurveyBasket.Api.Persistence;
 using SurveyBasket.Api.Settinges;
 using System.Reflection;
@@ -83,9 +84,10 @@ namespace SurveyBasket.Api
         //Jwt
         private static IServiceCollection AddAuthConfig(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddIdentity<ApplicationUser, IdentityRole>()
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
+            services.AddPermissionConfig();
 
             services.AddSingleton<IJwtProvider, JwtProvider>();
 
@@ -196,6 +198,12 @@ namespace SurveyBasket.Api
         {
             services.AddHttpContextAccessor();
             return services; 
+        }
+        private static IServiceCollection AddPermissionConfig(this IServiceCollection services)
+        {
+            services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();
+            services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
+            return services;
         }
     }
 }
