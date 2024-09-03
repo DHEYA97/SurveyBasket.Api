@@ -3,6 +3,7 @@ using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cors;
 using SurveyBasket.Api.Abstractions;
+using SurveyBasket.Api.Contract.Common;
 using SurveyBasket.Api.Contract.Poll;
 using SurveyBasket.Api.Contract.Question;
 
@@ -31,6 +32,15 @@ namespace SurveyBasket.Api.Controllers
             var questionsResult = await _questionService.GetAllAsync(pollId, cancellationToken);
 
             return questionsResult.IsSuccess ? Ok(questionsResult.Value) :questionsResult.ToProblem() ;
+        }
+
+        [HttpGet("with-filter")]
+        [HasPermission(Permissions.GetQuestions)]
+        public async Task<IActionResult> GetAllWithPagination([FromRoute] int pollId,[FromQuery]FilterResponse filter, CancellationToken cancellationToken)
+        {
+            var questionsResult = await _questionService.GetAllWithPaginationAsync(pollId,filter, cancellationToken);
+
+            return questionsResult.IsSuccess ? Ok(questionsResult.Value) : questionsResult.ToProblem();
         }
 
         [HttpPost("")]
