@@ -7,8 +7,8 @@ namespace SurveyBasket.Api.Contract.Validation
         public LoginRequestValidation() 
         {
             RuleFor(l => l.Email)
-                   .NotEmpty();
-                   //.EmailAddress();
+                   .NotEmpty()
+                   .EmailAddress();
         }
     }
 }

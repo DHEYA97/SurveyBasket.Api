@@ -1,5 +1,4 @@
 ﻿
-using Microsoft.AspNetCore.Authorization;
 using SurveyBasket.Api.Contract.Poll;
 
 namespace SurveyBasket.Api.Controllers
@@ -7,20 +6,31 @@ namespace SurveyBasket.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize]
+    
+    //[DisableCors]
+   // [EnableCors("MyPolicy")]
     public class Polls(IPollService pollService) : ControllerBase
     {
         private readonly IPollService _pollService = pollService;
 
         [HttpGet("")]
-        [Authorize]
+        [HasPermission(Permissions.GetPolls)]
         public async Task<IActionResult> GetAll()
         {
-            var polls = await _pollService.GetAllAsync();
-            var pollsDto = polls.Adapt<IEnumerable<PollResponse>>();
-            return Ok(pollsDto);
+            var pollsResult = await _pollService.GetAllAsync();
+            return  Ok(pollsResult.Value);
+        }
+        [HttpGet("current")]
+        [HasPermission(Permissions.GetPolls)]
+        public async Task<IActionResult> GetAllCurrent()
+        {
+            var pollsResult = await _pollService.GetAllCurrentAsync();
+            return Ok(pollsResult.Value);
         }
         [HttpGet("{id}")]
-        public async Task<IActionResult> Get(int id)
+        [HasPermission(Permissions.GetPolls)]
+        public async Task<IActionResult> Get([FromRoute]int id)
         {
             #region local Mapster configration
             //var config = new TypeAdapterConfig();
@@ -32,40 +42,39 @@ namespace SurveyBasket.Api.Controllers
             //var pollDto = poll.Adapt<PollResponse>(config);
             #endregion
 
-            var poll = await _pollService.GetAsync(id);
-            var pollDto = poll.Adapt<PollResponse>();
-            return poll is null ? NotFound() : Ok(pollDto);
+            var pollResult = await _pollService.GetAsync(id);
+            return pollResult.IsSuccess ? Ok(pollResult.Value) : Problem(statusCode: StatusCodes.Status404NotFound, title: pollResult.Error.Code, detail: pollResult.Error.Description);
         }
 
+        
         [HttpPost("")]
-        public async Task<IActionResult> Add(PollRequest poll,CancellationToken cancellationToken)
+        public async Task<IActionResult> Add([FromBody] PollRequest request,
+        CancellationToken cancellationToken)
         {
-            var addPoll = await _pollService.AddAsync(poll.Adapt<Poll>(),cancellationToken);
-            return CreatedAtAction(nameof(Add), new { id = addPoll.Id }, addPoll);
+            var newPollResult = await _pollService.AddAsync(request, cancellationToken);
+
+            return newPollResult.IsSuccess 
+                ? CreatedAtAction(nameof(Get), new { id = newPollResult.Value.Id }, newPollResult.Value) 
+                : newPollResult.ToProblem();
         }
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, PollRequest poll, CancellationToken cancellationToken)
+        public async Task<IActionResult> Update([FromRoute] int id, [FromBody] PollRequest pollRequest, CancellationToken cancellationToken)
         {
-            var isUpdated = await _pollService.UpdateAsync(id, poll.Adapt<Poll>(),cancellationToken);
-            if (!isUpdated)
-                return NotFound();
-            return NoContent();
+            var isUpdatedResult = await _pollService.UpdateAsync(id, pollRequest, cancellationToken);
+            return isUpdatedResult.IsSuccess ? NoContent() : isUpdatedResult.ToProblem();
         }
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
+        public async Task<IActionResult> Delete([FromRoute] int id, CancellationToken cancellationToken)
         {
-            var isDeleted = await _pollService.DeleteAsync(id,cancellationToken);
-            if (!isDeleted)
-                return NotFound();
-            return NoContent();
+            var isDeleteResult = await _pollService.DeleteAsync(id,cancellationToken);
+            return isDeleteResult.IsSuccess ? NoContent() : isDeleteResult.ToProblem();
         }
         [HttpPut("{id}/togglePublish")]
-        public async Task<IActionResult> TogglePublish(int id, CancellationToken cancellationToken)
+        public async Task<IActionResult> TogglePublish([FromRoute] int id, CancellationToken cancellationToken)
         {
-            var isToggled = await _pollService.TogglePublishAsync(id,cancellationToken);
-            if (!isToggled)
-                return NotFound();
-            return NoContent();
+            var isToggledResult = await _pollService.TogglePublishAsync(id,cancellationToken);
+            return isToggledResult.IsSuccess ? NoContent() : isToggledResult.ToProblem();
         }
         [HttpPost("Test")]
         public IActionResult Test([FromBody] PollRequest poll)

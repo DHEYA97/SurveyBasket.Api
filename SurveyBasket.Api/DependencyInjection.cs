@@ -1,10 +1,12 @@
 ﻿using FluentValidation.AspNetCore;
+using Hangfire;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.IdentityModel.Tokens;
 using SurveyBasket.Api.Authentication;
 using SurveyBasket.Api.Persistence;
+using SurveyBasket.Api.Settinges;
 using System.Reflection;
 using System.Text;
 
@@ -15,13 +17,20 @@ namespace SurveyBasket.Api
         public static IServiceCollection AddDependency(this IServiceCollection services,IConfiguration configuration)
         {
             services.AddControllers();
+            
             services.AddDbContextConfig(configuration)
-                    .AddAuthConfig(configuration);
+                    .AddAuthConfig(configuration)
+                    .AddCorsConfig(configuration)
+                    .AddMailConfig(configuration)
+                    .AddHangFireConfig(configuration);
 
             services.AddSwaggerConfig()
                     .AddMapsterConfig()
                     .AddFluentValidationConfig()
-                    .AddServicesConfig();
+                    .AddServicesConfig()
+                    .AddCacheConfig()
+                    .AddExceptionHandlerConfig()
+                    .AddHttpContextAccessorConfig();
 
 
             return services;
@@ -30,6 +39,14 @@ namespace SurveyBasket.Api
         {
             services.AddScoped<IPollService, PollService>();
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IQuestionService, QuestionService>();
+            services.AddScoped<IVoteService, VoteService>();
+            services.AddScoped<IResultService, ResultService>();
+            services.AddScoped<IEmailSender, EmailService>();
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IRoleService, RoleService>();
+            //services.AddScoped<ICacheService, CacheService>();
             return services;
         }
         private static IServiceCollection AddSwaggerConfig(this IServiceCollection services)
@@ -66,8 +83,10 @@ namespace SurveyBasket.Api
         //Jwt
         private static IServiceCollection AddAuthConfig(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddIdentity<ApplicationUser, IdentityRole>()
-                .AddEntityFrameworkStores<ApplicationDbContext>();
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddDefaultTokenProviders();
+            services.AddPermissionConfig();
 
             services.AddSingleton<IJwtProvider, JwtProvider>();
 
@@ -105,6 +124,84 @@ namespace SurveyBasket.Api
                 };
             });
 
+
+            //Add Idintity configration
+            services.AddIdentityConfig();
+            return services;
+        }
+        private static IServiceCollection AddCorsConfig(this IServiceCollection services, IConfiguration configuration)
+        {
+            var allowOrigin = configuration.GetSection("AllowOrigin").Get<string[]>();
+
+            
+            services.AddCors(option => {
+                                option.AddDefaultPolicy(bulder =>
+                                                        bulder.AllowAnyOrigin()
+                                                              .AllowAnyMethod()
+                                                              .AllowAnyHeader()
+
+                                //Add from AppSetting
+                                //.WithOrigins(allowOrigin)
+                                );
+                                //More Than One Policy
+                                //option.AddPolicy("MyPolicy02", bulder =>
+                                //                                        bulder.AllowAnyOrigin()
+                                //                                                .AllowAnyMethod()
+                                //                                                .AllowAnyHeader()
+
+                                                
+                                //                );
+            }
+                             );
+            return services;
+        }
+        private static IServiceCollection AddExceptionHandlerConfig(this IServiceCollection services)
+        {
+            services.AddExceptionHandler<GlobalExceptionHandler>()
+                    .AddProblemDetails();
+            return services;
+        }
+        private static IServiceCollection AddCacheConfig(this IServiceCollection services)
+        {
+            services.AddHybridCache();
+            return services;
+        }
+        private static IServiceCollection AddIdentityConfig(this IServiceCollection services)
+        {
+            services.Configure<IdentityOptions>(Options =>
+            {
+                Options.Password.RequiredLength = 8;
+                Options.SignIn.RequireConfirmedEmail = true;
+                Options.User.RequireUniqueEmail = true;
+            });
+            return services;
+        }
+        private static IServiceCollection AddMailConfig(this IServiceCollection services, IConfiguration configuration)
+        {
+            services.Configure<MailSetting>(configuration.GetSection(MailSetting.SectionName));
+            return services;
+        }
+        private static IServiceCollection AddHangFireConfig(this IServiceCollection services, IConfiguration configuration)
+        {
+            
+            services.AddHangfire(config => config
+                    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+                    .UseSimpleAssemblyNameTypeSerializer()
+                    .UseRecommendedSerializerSettings()
+                    .UseSqlServerStorage(configuration.GetConnectionString("HangfireConnection")));
+
+            services.AddHangfireServer();
+            return services;
+        }
+        private static IServiceCollection AddHttpContextAccessorConfig(this IServiceCollection services)
+        {
+            services.AddHttpContextAccessor();
+            return services; 
+        }
+        private static IServiceCollection AddPermissionConfig(this IServiceCollection services)
+        {
+            services.AddTransient<IAuthorizationHandler, PermissionAuthorizationHandler>();
+            services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
             return services;
         }
     }
