@@ -38,7 +38,11 @@ namespace SurveyBasket.Api.Services
             var user = await _userManager.FindByEmailAsync(email);
             if (user is null)
                 return Result.Failure<AuthResponse>(UserErrors.InvalidCredentials);
-            var result = await _signInManager.PasswordSignInAsync(user,password,false,false);
+            
+            if (user.IsDisabled)
+                return Result.Failure<AuthResponse>(UserErrors.DisabledUser);
+
+            var result = await _signInManager.PasswordSignInAsync(user, password, false, true);
             if (result.Succeeded)
             {
                 var (userRoles, userPermissions) = await GetUserRolesAndPermissions(user, cancellationToken);
@@ -56,7 +60,13 @@ namespace SurveyBasket.Api.Services
                 var authResponse = new AuthResponse(user.Id, user.Email!, user.FirstName, user.LastName, token, expiration, refreshToken, refreshTokenExpierdDate);
                 return Result.Success(authResponse);
             }
-            return Result.Failure<AuthResponse>(result.IsNotAllowed ? UserErrors.EmailNotConfirmed : UserErrors.InvalidCredentials);
+            var error = result.IsNotAllowed
+            ? UserErrors.EmailNotConfirmed
+            : result.IsLockedOut
+            ? UserErrors.LockedOut
+            : UserErrors.InvalidCredentials;
+
+            return Result.Failure<AuthResponse>(error);
             
         }
         
@@ -68,8 +78,16 @@ namespace SurveyBasket.Api.Services
             if (userId is null)
                 return Result.Failure<AuthResponse>(UserErrors.InvalidJwtToken);
             var user = await _userManager.FindByIdAsync(userId);
+            
             if (user is null)
                 return Result.Failure<AuthResponse>(UserErrors.InvalidRefreshToken);
+            
+            if (user.IsDisabled)
+                return Result.Failure<AuthResponse>(UserErrors.DisabledUser);
+            
+            if (user.LockoutEnd > DateTime.UtcNow)
+                return Result.Failure<AuthResponse>(UserErrors.LockedOut);
+
             var userRefeshToken = user.RefreshTokens.SingleOrDefault(t=>t.Token == refreshToken && t.IsActive);
             if(userRefeshToken is null)
                 return Result.Failure<AuthResponse>(UserErrors.InvalidRefreshToken);
