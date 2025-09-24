@@ -31,11 +31,17 @@ namespace SurveyBasket.Api.Services
             using var smtp = new SmtpClient();
 
             _logger.LogInformation("Sending email to {email}", email);
+            try
+            {
+                smtp.Connect(_mailSettings.Host, _mailSettings.Port, SecureSocketOptions.StartTls);
+                smtp.Authenticate(_mailSettings.Mail, _mailSettings.Password);
+                await smtp.SendAsync(message);
+                smtp.Disconnect(true);
+            }
+            catch(Exception ex)
+            {
 
-            smtp.Connect(_mailSettings.Host, _mailSettings.Port, SecureSocketOptions.StartTls);
-            smtp.Authenticate(_mailSettings.Mail, _mailSettings.Password);
-            await smtp.SendAsync(message);
-            smtp.Disconnect(true);
+            }
         }
     }
 }

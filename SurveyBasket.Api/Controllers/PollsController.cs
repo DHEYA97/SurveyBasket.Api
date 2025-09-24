@@ -1,10 +1,14 @@
 ﻿
+using Asp.Versioning;
 using SurveyBasket.Api.Contract.Poll;
 
 namespace SurveyBasket.Api.Controllers
 
 {
+    [ApiVersion(1,Deprecated = true)]
+    [ApiVersion(2)]
     [Route("api/[controller]")]
+    //[Route("api/v{version:apiVersion}/[controller]")]
     [ApiController]
 
     public class PollsController(IPollService pollService) : ControllerBase
@@ -18,11 +22,20 @@ namespace SurveyBasket.Api.Controllers
             var pollsResult = await _pollService.GetAllAsync();
             return  Ok(pollsResult.Value);
         }
+        [MapToApiVersion(1)]
         [HttpGet("current")]
         [HasPermission(Permissions.GetPolls)]
-        public async Task<IActionResult> GetAllCurrent()
+        public async Task<IActionResult> GetAllCurrentV1()
         {
-            var pollsResult = await _pollService.GetAllCurrentAsync();
+            var pollsResult = await _pollService.GetAllCurrentV1Async();
+            return Ok(pollsResult.Value);
+        }
+        [MapToApiVersion(2)]
+        [HttpGet("current")]
+        [HasPermission(Permissions.GetPolls)]
+        public async Task<IActionResult> GetAllCurrentV2()
+        {
+            var pollsResult = await _pollService.GetAllCurrentV2Async();
             return Ok(pollsResult.Value);
         }
         [HttpGet("{id}")]

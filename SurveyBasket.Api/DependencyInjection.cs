@@ -1,14 +1,21 @@
-﻿using FluentValidation.AspNetCore;
+﻿using Asp.Versioning;
+using FluentValidation.AspNetCore;
 using Hangfire;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using SurveyBasket.Api.Authentication;
 using SurveyBasket.Api.Health;
 using SurveyBasket.Api.Persistence;
 using SurveyBasket.Api.Settinges;
+using SurveyBasket.Api.Swagger;
+using SurveyBasket.Api.Swagger.Example;
+using Swashbuckle.AspNetCore.Filters;
+using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Reflection;
 using System.Text;
 using System.Threading.RateLimiting;
@@ -35,7 +42,8 @@ namespace SurveyBasket.Api
                     .AddCacheConfig()
                     .AddExceptionHandlerConfig()
                     .AddHttpContextAccessorConfig()
-                    .AddRateLimitConfig();
+                    .AddRateLimitConfig()
+                    .AddApiVersioningConfig();
 
 
             return services;
@@ -57,14 +65,50 @@ namespace SurveyBasket.Api
         private static IServiceCollection AddSwaggerConfig(this IServiceCollection services)
         {
             services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen(c =>
+            services.AddSwaggerGen(options =>
             {
-                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+                // Auth
+                options.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, new OpenApiSecurityScheme
                 {
-                    Title = "SurveyBasket API",
-                    Version = "v1"
+                    Name = "Authorization",
+                    Description = "Please add your token",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    BearerFormat = "JWT",
+                    Scheme = JwtBearerDefaults.AuthenticationScheme
                 });
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Id = JwtBearerDefaults.AuthenticationScheme,
+                                Type = ReferenceType.SecurityScheme
+                            }
+                        },
+                        Array.Empty<string>()
+                    }
+                });
+
+                // Summary And Commant
+                var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+                // Default Value
+                options.OperationFilter<SwaggerDefaultValues>();
+
+                //Example
+                options.ExampleFilters();
+
             });
+
+            // Version
+            services.AddTransient<IConfigureOptions<SwaggerGenOptions>, ConfigureSwaggerOptions>();
+
+            //Example
+            services.AddSwaggerExamplesFromAssemblyOf<LoginRequestExample>();
             return services;
         }
         private static IServiceCollection AddMapsterConfig(this IServiceCollection services)
@@ -300,6 +344,26 @@ namespace SurveyBasket.Api
                     )
                 );
 
+            });
+            return services;
+        }
+        private static IServiceCollection AddApiVersioningConfig(this IServiceCollection services)
+        {
+            services.AddApiVersioning(option =>
+            {
+                option.DefaultApiVersion = new ApiVersion(1);
+                option.AssumeDefaultVersionWhenUnspecified = true;
+                option.ReportApiVersions = true;
+                option.ApiVersionReader = ApiVersionReader.Combine(
+                                            //new UrlSegmentApiVersionReader(),
+                                            //new QueryStringApiVersionReader("api-version"),
+                                            new HeaderApiVersionReader("api-version")
+                                            //new MediaTypeApiVersionReader("v")
+                                        );
+            }).AddApiExplorer(option =>
+            {
+                option.GroupNameFormat = "'v'V";
+                option.SubstituteApiVersionInUrl = true;
             });
             return services;
         }
