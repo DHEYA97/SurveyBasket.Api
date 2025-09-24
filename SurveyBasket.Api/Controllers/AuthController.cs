@@ -1,4 +1,5 @@
-﻿using SurveyBasket.Api.Contract.Auth;
+﻿using Microsoft.AspNetCore.RateLimiting;
+using SurveyBasket.Api.Contract.Auth;
 using SurveyBasket.Api.Contract.Auth.Register;
 using SurveyBasket.Api.Contract.ConfirmEmail;
 using SurveyBasket.Api.Contract.ReSendConfirmEmail;
@@ -8,10 +9,10 @@ namespace SurveyBasket.Api.Controllers
 {
     [Route("[controller]")]
     [ApiController]
-    public class Auth(IAuthService authService,ILogger<Auth> logger) : ControllerBase
+    public class AuthController(IAuthService authService,ILogger<AuthController> logger) : ControllerBase
     {
         private readonly IAuthService _authService = authService;
-        private readonly ILogger<Auth> _logger = logger;
+        private readonly ILogger<AuthController> _logger = logger;
 
         [HttpPost("")]
         public async Task<IActionResult> Login([FromBody] LoginRequest Request,CancellationToken cancellationToken = default)
@@ -62,6 +63,5 @@ namespace SurveyBasket.Api.Controllers
             var result = await _authService.ConfirmResetPasswordAsync(Request);
             return result.IsSuccess ? Ok() : result.ToProblem();
         }
-
     }
 }

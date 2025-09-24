@@ -2,10 +2,8 @@ using Hangfire;
 using HangfireBasicAuthenticationFilter;
 using Serilog;
 using SurveyBasket.Api;
-using SurveyBasket.Api.Middleware;
-using SurveyBasket.Api.Persistence;
-using System.Net;
-
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using HealthChecks.UI.Client;
 var builder = WebApplication.CreateBuilder(args);
 
 //Add serilog
@@ -44,7 +42,10 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "SurveyBasket API V1");
+    });
 }
 
 app.UseSerilogRequestLogging();
@@ -72,14 +73,32 @@ app.UseHangfireDashboard("/jobs",new DashboardOptions
     DashboardTitle = "Survey Basket Dashboard",
 });
 
-var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
-using var scope = scopeFactory.CreateScope();
-var notificationService = scope.ServiceProvider.GetService<INotificationService>();
-RecurringJob.AddOrUpdate("SendEmailInBackgroundJob", () => notificationService!.SendEmailInBackgroundJob(null), Cron.Daily);
+//var scopeFactory = app.Services.GetRequiredService<IServiceScopeFactory>();
+//using var scope = scopeFactory.CreateScope();
+//var notificationService = scope.ServiceProvider.GetService<INotificationService>();
+//RecurringJob.AddOrUpdate("SendEmailInBackgroundJob", () => notificationService!.SendEmailInBackgroundJob(null), Cron.Daily);
+
 app.MapControllers();
 
 //Handling Exception Before .Net 8
 //app.UseMiddleware<ExceptionHandlingMiddleware>();
 //Handling Exception After .Net 8
 app.UseExceptionHandler();
+
+//HealthChecks
+app.MapHealthChecks("health",new HealthCheckOptions
+{
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+//Optional HealthChecks
+app.MapHealthChecks("health-api", new HealthCheckOptions
+{
+    Predicate = x=> x.Tags.Contains("api"),
+    ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
+});
+
+
+//Rate Limit
+app.UseRateLimiter();
+
 app.Run();

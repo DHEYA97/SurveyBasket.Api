@@ -3,12 +3,15 @@ using Hangfire;
 using MapsterMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
 using SurveyBasket.Api.Authentication;
+using SurveyBasket.Api.Health;
 using SurveyBasket.Api.Persistence;
 using SurveyBasket.Api.Settinges;
 using System.Reflection;
 using System.Text;
+using System.Threading.RateLimiting;
 
 namespace SurveyBasket.Api
 {
@@ -22,7 +25,8 @@ namespace SurveyBasket.Api
                     .AddAuthConfig(configuration)
                     .AddCorsConfig(configuration)
                     .AddMailConfig(configuration)
-                    .AddHangFireConfig(configuration);
+                    .AddHangFireConfig(configuration)
+                    .AddHealthCheckConfig(configuration);
 
             services.AddSwaggerConfig()
                     .AddMapsterConfig()
@@ -30,7 +34,8 @@ namespace SurveyBasket.Api
                     .AddServicesConfig()
                     .AddCacheConfig()
                     .AddExceptionHandlerConfig()
-                    .AddHttpContextAccessorConfig();
+                    .AddHttpContextAccessorConfig()
+                    .AddRateLimitConfig();
 
 
             return services;
@@ -51,9 +56,15 @@ namespace SurveyBasket.Api
         }
         private static IServiceCollection AddSwaggerConfig(this IServiceCollection services)
         {
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             services.AddEndpointsApiExplorer();
-            services.AddSwaggerGen();
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+                {
+                    Title = "SurveyBasket API",
+                    Version = "v1"
+                });
+            });
             return services;
         }
         private static IServiceCollection AddMapsterConfig(this IServiceCollection services)
@@ -86,6 +97,7 @@ namespace SurveyBasket.Api
             services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
                 .AddDefaultTokenProviders();
+
             services.AddPermissionConfig();
 
             services.AddSingleton<IJwtProvider, JwtProvider>();
@@ -204,5 +216,111 @@ namespace SurveyBasket.Api
             services.AddTransient<IAuthorizationPolicyProvider, PermissionAuthorizationPolicyProvider>();
             return services;
         }
+        private static IServiceCollection AddHealthCheckConfig(this IServiceCollection services, IConfiguration configuration)
+        {
+            var connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("DefaultConnection String Not Found");
+            services.AddHealthChecks()
+                    .AddDbContextCheck<ApplicationDbContext>(name: "DataBase From Entity FrameWork")
+                    .AddSqlServer(name: "DataBase From Sql Server",connectionString: connectionString)
+                    .AddHangfire(opttions =>
+                    {
+                        opttions.MinimumAvailableServers = 1;
+                    },name: "HangFire")
+                    .AddUrlGroup(name: "google Api", uri:new Uri("https://www.google.com"), tags: ["api"]) // Tag-Optional
+                    .AddUrlGroup(name: "facebook Api", uri:new Uri("https://www.facebook.com"), tags: ["api"])
+                    .AddCheck<MailHealthCheck>(name: "Mail Health Check");
+            return services;
+        }
+
+        private static IServiceCollection AddRateLimitConfig(this IServiceCollection services)
+        {
+            services.AddRateLimiter(ratelimitConfig =>
+            {
+                ratelimitConfig.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                // 1- Concurrency
+                ratelimitConfig.AddConcurrencyLimiter(RateLimitConst.concurrency, option =>
+                {
+                    option.PermitLimit = 2;
+                    option.QueueLimit = 1;
+                    option.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                });
+
+                // 2- Fixed Window
+                ratelimitConfig.AddFixedWindowLimiter(RateLimitConst.fixedWindow, option =>
+                {
+                    option.PermitLimit = 2;
+                    option.QueueLimit = 1;
+                    option.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    option.Window = TimeSpan.FromSeconds(20);
+                });
+
+                // 3- Token Bucket
+                ratelimitConfig.AddTokenBucketLimiter(RateLimitConst.tokenBucket, option =>
+                {
+                    option.TokenLimit = 2;
+                    option.QueueLimit = 1;
+                    option.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    option.ReplenishmentPeriod = TimeSpan.FromSeconds(30);
+                    option.TokensPerPeriod = 2;
+                    option.AutoReplenishment = true;
+                });
+
+                // 4- Fixed Window
+                ratelimitConfig.AddSlidingWindowLimiter(RateLimitConst.slidingWindow, option =>
+                {
+                    option.PermitLimit = 2;
+                    option.QueueLimit = 1;
+                    option.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
+                    option.Window = TimeSpan.FromSeconds(20);
+                    option.SegmentsPerWindow = 2;
+                });
+
+
+                // 5- Ip Adress
+                ratelimitConfig.AddPolicy(RateLimitConst.ipAddress, httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey:httpContext.Connection.RemoteIpAddress?.ToString(),
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 2,
+                            Window = TimeSpan.FromSeconds(20)
+                        }
+                    )
+                );
+
+                // 6- User
+                ratelimitConfig.AddPolicy(RateLimitConst.userLimit, httpContext =>
+                    RateLimitPartition.GetFixedWindowLimiter(
+                        partitionKey: httpContext.User.Identity?.Name?.ToString(),
+                        factory: _ => new FixedWindowRateLimiterOptions
+                        {
+                            PermitLimit = 2,
+                            Window = TimeSpan.FromSeconds(20)
+                        }
+                    )
+                );
+
+            });
+            return services;
+        }
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

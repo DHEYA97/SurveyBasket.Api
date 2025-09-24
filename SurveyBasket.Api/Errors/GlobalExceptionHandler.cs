@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
-using SurveyBasket.Api.Middleware;
 
 namespace SurveyBasket.Api.Errors
 {

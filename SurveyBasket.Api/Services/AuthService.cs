@@ -93,7 +93,7 @@ namespace SurveyBasket.Api.Services
                 return Result.Failure<AuthResponse>(UserErrors.InvalidRefreshToken);
             userRefeshToken.RevokedOn = DateTime.UtcNow;
             
-            var (userRoles, userPermissions) = await GetUserRolesAndPermissions(user, cancellationToken);;
+            var (userRoles, userPermissions) = await GetUserRolesAndPermissions(user, cancellationToken);
             var (newToken, expiration) = _jwtProvider.GenerateToken(user,userRoles, userPermissions);
 
             //RefreshToken

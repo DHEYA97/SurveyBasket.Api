@@ -12,7 +12,7 @@ namespace SurveyBasket.Api.Controllers
 {
     [Route("api/polls/{pollId}/[controller]")]
     [ApiController]
-    public class Questions(IQuestionService questionService) : ControllerBase
+    public class QuestionsController(IQuestionService questionService) : ControllerBase
     {
         private readonly IQuestionService _questionService = questionService;
 

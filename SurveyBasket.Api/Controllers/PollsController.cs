@@ -6,11 +6,8 @@ namespace SurveyBasket.Api.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
-    
-    //[DisableCors]
-   // [EnableCors("MyPolicy")]
-    public class Polls(IPollService pollService) : ControllerBase
+
+    public class PollsController(IPollService pollService) : ControllerBase
     {
         private readonly IPollService _pollService = pollService;
 

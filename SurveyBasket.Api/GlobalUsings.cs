@@ -1,7 +1,7 @@
 ﻿global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.EntityFrameworkCore;
 global using Microsoft.AspNetCore.Identity;
-global using  Mapster;
+global using Mapster;
 global using FluentValidation;
 global using Microsoft.AspNetCore.Authorization;
 
