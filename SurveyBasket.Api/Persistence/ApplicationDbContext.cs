@@ -13,6 +13,7 @@ namespace SurveyBasket.Api.Persistence
         public DbSet<Poll> Polls { get; set; }
         public DbSet<Vote> Votes { get; set; }
         public DbSet<VoteAnswer> VoteAnswers { get; set; }
+        public DbSet<RefreshToken> RefreshTokens{ get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

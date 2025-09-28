@@ -87,7 +87,9 @@ namespace SurveyBasket.Api.Services
             if (user.LockoutEnd > DateTime.UtcNow)
                 return Result.Failure<AuthResponse>(UserErrors.LockedOut);
 
-            var userRefeshToken = user.RefreshTokens.SingleOrDefault(t => t.Token == refreshToken && t.IsActive);
+            var userRefeshToken = _context.RefreshTokens.Where(t => t.UserId == user.Id && t.Token == refreshToken)
+                                          .AsEnumerable()
+                                          .SingleOrDefault(t => t.IsActive);
             if (userRefeshToken is null)
                 return Result.Failure<AuthResponse>(UserErrors.InvalidRefreshToken);
             userRefeshToken.RevokedOn = DateTime.UtcNow;
@@ -118,7 +120,9 @@ namespace SurveyBasket.Api.Services
             var user = await _userManager.FindByIdAsync(userId);
             if (user is null)
                 return Result.Failure(UserErrors.InvalidJwtToken);
-            var userRefeshToken = user.RefreshTokens.SingleOrDefault(t => t.Token == refreshToken && t.IsActive);
+            var userRefeshToken = _context.RefreshTokens.Where(t => t.UserId == user.Id && t.Token == refreshToken)
+                                         .AsEnumerable()
+                                         .SingleOrDefault(t => t.IsActive);
             if (userRefeshToken is null)
                 return Result.Failure(UserErrors.InvalidRefreshToken);
             userRefeshToken.RevokedOn = DateTime.UtcNow;

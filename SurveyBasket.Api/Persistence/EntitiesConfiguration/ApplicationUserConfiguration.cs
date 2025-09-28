@@ -6,10 +6,10 @@ namespace SurveyBasket.Api.Persistence.EntitiesConfiguration
     {
         public void Configure(EntityTypeBuilder<ApplicationUser> builder)
         {
-            builder.OwnsMany(u => u.RefreshTokens)
-                   .ToTable("RefreshTokens")
-                   .WithOwner()
-                   .HasForeignKey("UserId");
+            builder.HasMany(u => u.RefreshTokens)
+                   .WithOne(rt => rt.User)
+                   .HasForeignKey(rt => rt.UserId)
+                   .OnDelete(DeleteBehavior.Restrict);
 
             builder.Property(u => u.FirstName).HasMaxLength(100);
             builder.Property(u => u.LastName).HasMaxLength(100);

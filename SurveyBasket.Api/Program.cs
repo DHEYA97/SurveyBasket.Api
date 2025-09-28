@@ -39,9 +39,10 @@ builder.Services.AddDependency(builder.Configuration);
 
 var app = builder.Build();
 
+
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
     app.UseSwaggerUI(options =>
     {
@@ -59,7 +60,7 @@ if (app.Environment.IsDevelopment())
     //.RequireAuthorization("ApiDocAuth");
 
     app.MapScalarApiReference();
-}
+//}
 
 app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
@@ -113,5 +114,15 @@ app.MapHealthChecks("health-api", new HealthCheckOptions
 
 //Rate Limit
 app.UseRateLimiter();
+
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/")
+    {
+        context.Response.Redirect("/scalar/v1");
+        return;
+    }
+    await next();
+});
 
 app.Run();
