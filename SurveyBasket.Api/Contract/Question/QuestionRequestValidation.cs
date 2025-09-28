@@ -12,19 +12,19 @@
                 .NotNull();
 
 
-            RuleFor(q=>q.Answers)
-                .Must(q=>q.Count() > 1)
+            RuleFor(q => q.Answers)
+                .Must(q => q.Count() > 1)
                 .WithMessage("Question should has at lest 2 Answers")
-                .When(q=>q.Answers != null);
+                .When(q => q.Answers != null);
 
 
             RuleFor(q => q.Answers)
-                .Must(q=>q.Distinct().Count() == q.Count())
+                .Must(q => q.Distinct().Count() == q.Count())
                 .WithMessage(p => "You Cannot duplicate Answer for the same question")
                 .When(q => q.Answers != null); ;
 
         }
 
-        
+
     }
 }

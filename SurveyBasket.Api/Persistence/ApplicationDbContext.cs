@@ -1,13 +1,11 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using SurveyBasket.Api.Extensions;
 using System.Reflection;
-using System.Security.Claims;
 
 namespace SurveyBasket.Api.Persistence
 {
-    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options,IHttpContextAccessor httpContextAccessor): 
-        IdentityDbContext<ApplicationUser,ApplicationRole,string>(options)
+    public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, IHttpContextAccessor httpContextAccessor) :
+        IdentityDbContext<ApplicationUser, ApplicationRole, string>(options)
     {
         private readonly IHttpContextAccessor _httpContextAccessor = httpContextAccessor;
         public DbSet<Answer> Answers { get; set; }
@@ -37,9 +35,9 @@ namespace SurveyBasket.Api.Persistence
             foreach (var entity in Entities)
             {
                 var currentUserId = _httpContextAccessor.HttpContext?.User.GetUserId()!;
-                if(entity.State == EntityState.Added)
+                if (entity.State == EntityState.Added)
                 {
-                    entity.Property(x=>x.CreatedById).CurrentValue = currentUserId;
+                    entity.Property(x => x.CreatedById).CurrentValue = currentUserId;
                 }
                 else if (entity.State == EntityState.Modified)
                 {

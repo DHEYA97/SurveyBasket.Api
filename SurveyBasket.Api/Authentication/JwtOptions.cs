@@ -12,7 +12,7 @@ namespace SurveyBasket.Api.Authentication
         [Required]
         public string Audience { get; init; } = string.Empty;
         [Required]
-        [Range(1,int.MaxValue)]
+        [Range(1, int.MaxValue)]
         public int Expirition { get; init; }
         public override string ToString()
         {

@@ -1,9 +1,10 @@
 using Hangfire;
 using HangfireBasicAuthenticationFilter;
+using HealthChecks.UI.Client;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Scalar.AspNetCore;
 using Serilog;
 using SurveyBasket.Api;
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using HealthChecks.UI.Client;
 var builder = WebApplication.CreateBuilder(args);
 
 //Add serilog
@@ -50,6 +51,14 @@ if (app.Environment.IsDevelopment())
             options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
         }
     });
+
+
+    //Add Open Api
+    app.MapOpenApi();
+    // Add Auth To Open Doc 
+    //.RequireAuthorization("ApiDocAuth");
+
+    app.MapScalarApiReference();
 }
 
 app.UseSerilogRequestLogging();
@@ -64,7 +73,7 @@ app.UseAuthorization();
 ////Add OutputCache
 //app.UseOutputCache();
 #endregion
-app.UseHangfireDashboard("/jobs",new DashboardOptions
+app.UseHangfireDashboard("/jobs", new DashboardOptions
 {
     Authorization =
     [
@@ -90,14 +99,14 @@ app.MapControllers();
 app.UseExceptionHandler();
 
 //HealthChecks
-app.MapHealthChecks("health",new HealthCheckOptions
+app.MapHealthChecks("health", new HealthCheckOptions
 {
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 //Optional HealthChecks
 app.MapHealthChecks("health-api", new HealthCheckOptions
 {
-    Predicate = x=> x.Tags.Contains("api"),
+    Predicate = x => x.Tags.Contains("api"),
     ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
 });
 

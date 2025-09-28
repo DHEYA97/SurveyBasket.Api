@@ -1,7 +1,4 @@
-﻿using SurveyBasket.Api.Abstractions.Consts;
-using SurveyBasket.Api.Contract.ConfirmEmail;
-
-namespace SurveyBasket.Api.Contract.ResetPassword
+﻿namespace SurveyBasket.Api.Contract.ResetPassword
 {
     public class ResetPasswordRequestValidation : AbstractValidator<ResetPasswordRequest>
     {
@@ -10,7 +7,7 @@ namespace SurveyBasket.Api.Contract.ResetPassword
             RuleFor(l => l.Email)
                 .NotEmpty()
                 .EmailAddress();
-            
+
             RuleFor(l => l.Code)
                 .NotEmpty();
             RuleFor(l => l.NewPassword)

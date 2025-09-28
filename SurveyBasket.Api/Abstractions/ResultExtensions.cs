@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-
-namespace SurveyBasket.Api.Abstractions
+﻿namespace SurveyBasket.Api.Abstractions
 {
     public static class ResultExtensions
     {
@@ -15,12 +13,12 @@ namespace SurveyBasket.Api.Abstractions
                        {
                            { "errors",new[]
                                 {
-                                   new 
+                                   new
                                    {
                                         result.Error.Code,
                                         result.Error.Description
                                    }
-                                } 
+                                }
                            }
                        };
             return new ObjectResult(problemDetails);

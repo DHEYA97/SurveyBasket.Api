@@ -9,7 +9,7 @@ namespace SurveyBasket.Api.Services
         Task<Result<IEnumerable<PollResponseV2>>> GetAllCurrentV2Async(CancellationToken cancellationToken = default);
         Task<Result<IEnumerable<PollResponse>>> GetAllAsync(CancellationToken cancellationToken = default);
         Task<Result<PollResponse>> AddAsync(PollRequest pollRequest, CancellationToken cancellationToken = default);
-        Task<Result> UpdateAsync(int id,PollRequest pollRequest, CancellationToken cancellationToken = default);
+        Task<Result> UpdateAsync(int id, PollRequest pollRequest, CancellationToken cancellationToken = default);
         Task<Result> DeleteAsync(int id, CancellationToken cancellationToken = default);
         Task<Result> TogglePublishAsync(int id, CancellationToken cancellationToken = default);
     }

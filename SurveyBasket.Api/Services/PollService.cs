@@ -1,9 +1,6 @@
-﻿using Azure.Core;
-using Hangfire;
+﻿using Hangfire;
 using SurveyBasket.Api.Contract.Poll;
-using SurveyBasket.Api.Entities;
 using SurveyBasket.Api.Persistence;
-using System.Collections.Generic;
 
 namespace SurveyBasket.Api.Services
 {
@@ -33,7 +30,7 @@ namespace SurveyBasket.Api.Services
         public async Task<Result<IEnumerable<PollResponse>>> GetAllCurrentV1Async(CancellationToken cancellationToken = default)
         {
             var pollsResponse = await _context.Polls
-                                              .Where(p=>p.IsPublished && p.StartAt <= DateOnly.FromDateTime(DateTime.UtcNow) && p.EndAt >= DateOnly.FromDateTime(DateTime.UtcNow))                              
+                                              .Where(p => p.IsPublished && p.StartAt <= DateOnly.FromDateTime(DateTime.UtcNow) && p.EndAt >= DateOnly.FromDateTime(DateTime.UtcNow))
                                               .AsNoTracking()
                                               .ProjectToType<PollResponse>()
                                               .ToListAsync(cancellationToken);
@@ -50,30 +47,28 @@ namespace SurveyBasket.Api.Services
         }
         public async Task<Result<PollResponse>> AddAsync(PollRequest pollRequest, CancellationToken cancellationToken = default)
         {
-            var isExistTitle = _context.Polls.Any(x=>x.Title == pollRequest.Title);
-            if(isExistTitle)
-               return Result.Failure<PollResponse>(PollErrors.DuplicatePollTitle);
+            var isExistTitle = _context.Polls.Any(x => x.Title == pollRequest.Title);
+            if (isExistTitle)
+                return Result.Failure<PollResponse>(PollErrors.DuplicatePollTitle);
 
             var poll = pollRequest.Adapt<Poll>();
             await _context.AddAsync(poll, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
             return Result.Success(poll.Adapt<PollResponse>());
         }
-        
+
         public async Task<Result> UpdateAsync(int id, PollRequest pollRequest, CancellationToken cancellationToken = default)
         {
             var upPoll = await _context.Polls.FindAsync(id, cancellationToken);
-            if (upPoll is null) 
+            if (upPoll is null)
                 return Result.Failure(PollErrors.PollNotFound);
-            
+
             var isExistTitle = _context.Polls.Any(x => x.Title == pollRequest.Title && x.Id != id);
             if (isExistTitle)
                 return Result.Failure<PollResponse>(PollErrors.DuplicatePollTitle);
 
-            upPoll.Title = pollRequest.Title;
-            upPoll.Summary = pollRequest.Summary;
-            upPoll.StartAt = pollRequest.StartAt;
-            upPoll.EndAt = pollRequest.EndAt;
+            upPoll = pollRequest.Adapt(upPoll);
+
             await _context.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }
@@ -93,7 +88,7 @@ namespace SurveyBasket.Api.Services
                 return Result.Failure(PollErrors.PollNotFound);
             poll.IsPublished = !poll.IsPublished;
             await _context.SaveChangesAsync(cancellationToken);
-            if(poll.IsPublished && poll.StartAt == DateOnly.FromDateTime(DateTime.UtcNow))
+            if (poll.IsPublished && poll.StartAt == DateOnly.FromDateTime(DateTime.UtcNow))
                 BackgroundJob.Enqueue(() => _notificationService.SendEmailInBackgroundJob(null));
             return Result.Success();
         }

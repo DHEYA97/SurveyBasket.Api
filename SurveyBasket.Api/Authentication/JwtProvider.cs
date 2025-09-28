@@ -11,7 +11,7 @@ namespace SurveyBasket.Api.Authentication
     public class JwtProvider(IOptions<JwtOptions> options) : IJwtProvider
     {
         private readonly JwtOptions _jwtOptions = options.Value;
-        public (string Token, int Expirition) GenerateToken(ApplicationUser user,IEnumerable<string> roles, IEnumerable<string> permissions)
+        public (string Token, int Expirition) GenerateToken(ApplicationUser user, IEnumerable<string> roles, IEnumerable<string> permissions)
         {
             Claim[] claims = [
                 new (JwtRegisteredClaimNames.Sub,user.Id),
@@ -52,10 +52,10 @@ namespace SurveyBasket.Api.Authentication
                     ValidateIssuer = false,
                     ValidateAudience = false,
                     ClockSkew = TimeSpan.Zero
-                },out SecurityToken validatedToken);
-                
+                }, out SecurityToken validatedToken);
+
                 var jwtToken = (JwtSecurityToken)validatedToken;
-                return jwtToken.Claims.First(x=>x.Type == JwtRegisteredClaimNames.Sub).Value;
+                return jwtToken.Claims.First(x => x.Type == JwtRegisteredClaimNames.Sub).Value;
             }
             catch
             {

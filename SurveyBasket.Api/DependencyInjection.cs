@@ -1,4 +1,5 @@
 ﻿using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using FluentValidation.AspNetCore;
 using Hangfire;
 using MapsterMapper;
@@ -10,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using SurveyBasket.Api.Authentication;
 using SurveyBasket.Api.Health;
+using SurveyBasket.Api.OpenApi;
 using SurveyBasket.Api.Persistence;
 using SurveyBasket.Api.Settinges;
 using SurveyBasket.Api.Swagger;
@@ -24,10 +26,10 @@ namespace SurveyBasket.Api
 {
     public static class DependencyInjection
     {
-        public static IServiceCollection AddDependency(this IServiceCollection services,IConfiguration configuration)
+        public static IServiceCollection AddDependency(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddControllers();
-            
+
             services.AddDbContextConfig(configuration)
                     .AddAuthConfig(configuration)
                     .AddCorsConfig(configuration)
@@ -35,15 +37,17 @@ namespace SurveyBasket.Api
                     .AddHangFireConfig(configuration)
                     .AddHealthCheckConfig(configuration);
 
-            services.AddSwaggerConfig()
-                    .AddMapsterConfig()
-                    .AddFluentValidationConfig()
-                    .AddServicesConfig()
-                    .AddCacheConfig()
-                    .AddExceptionHandlerConfig()
+            services.AddExceptionHandlerConfig()
                     .AddHttpContextAccessorConfig()
+                    .AddServicesConfig()
+                    .AddFluentValidationConfig()
+                    .AddMapsterConfig()
+                    .AddCacheConfig()
                     .AddRateLimitConfig()
-                    .AddApiVersioningConfig();
+                    .AddApiVersioningConfig()
+                    .AddEndpointsApiExplorer()
+                    .AddSwaggerConfig()
+                    .AddOpenApiConfig();
 
 
             return services;
@@ -64,7 +68,6 @@ namespace SurveyBasket.Api
         }
         private static IServiceCollection AddSwaggerConfig(this IServiceCollection services)
         {
-            services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(options =>
             {
                 // Auth
@@ -127,7 +130,7 @@ namespace SurveyBasket.Api
             return services;
         }
 
-        private static IServiceCollection AddDbContextConfig(this IServiceCollection services,IConfiguration configuration)
+        private static IServiceCollection AddDbContextConfig(this IServiceCollection services, IConfiguration configuration)
         {
             var connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("DefaultConnection String Not Found");
             services.AddDbContext<ApplicationDbContext>(option =>
@@ -189,24 +192,25 @@ namespace SurveyBasket.Api
         {
             var allowOrigin = configuration.GetSection("AllowOrigin").Get<string[]>();
 
-            
-            services.AddCors(option => {
-                                option.AddDefaultPolicy(bulder =>
-                                                        bulder.AllowAnyOrigin()
-                                                              .AllowAnyMethod()
-                                                              .AllowAnyHeader()
 
-                                //Add from AppSetting
-                                //.WithOrigins(allowOrigin)
-                                );
-                                //More Than One Policy
-                                //option.AddPolicy("MyPolicy02", bulder =>
-                                //                                        bulder.AllowAnyOrigin()
-                                //                                                .AllowAnyMethod()
-                                //                                                .AllowAnyHeader()
+            services.AddCors(option =>
+            {
+                option.AddDefaultPolicy(bulder =>
+                                        bulder.AllowAnyOrigin()
+                                              .AllowAnyMethod()
+                                              .AllowAnyHeader()
 
-                                                
-                                //                );
+                //Add from AppSetting
+                //.WithOrigins(allowOrigin)
+                );
+                //More Than One Policy
+                //option.AddPolicy("MyPolicy02", bulder =>
+                //                                        bulder.AllowAnyOrigin()
+                //                                                .AllowAnyMethod()
+                //                                                .AllowAnyHeader()
+
+
+                //                );
             }
                              );
             return services;
@@ -234,12 +238,15 @@ namespace SurveyBasket.Api
         }
         private static IServiceCollection AddMailConfig(this IServiceCollection services, IConfiguration configuration)
         {
-            services.Configure<MailSetting>(configuration.GetSection(MailSetting.SectionName));
+            services.AddOptions<MailSetting>()
+                    .BindConfiguration(MailSetting.SectionName)
+                    .ValidateDataAnnotations()
+                    .ValidateOnStart();
             return services;
         }
         private static IServiceCollection AddHangFireConfig(this IServiceCollection services, IConfiguration configuration)
         {
-            
+
             services.AddHangfire(config => config
                     .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
                     .UseSimpleAssemblyNameTypeSerializer()
@@ -252,7 +259,7 @@ namespace SurveyBasket.Api
         private static IServiceCollection AddHttpContextAccessorConfig(this IServiceCollection services)
         {
             services.AddHttpContextAccessor();
-            return services; 
+            return services;
         }
         private static IServiceCollection AddPermissionConfig(this IServiceCollection services)
         {
@@ -265,13 +272,13 @@ namespace SurveyBasket.Api
             var connectionString = configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("DefaultConnection String Not Found");
             services.AddHealthChecks()
                     .AddDbContextCheck<ApplicationDbContext>(name: "DataBase From Entity FrameWork")
-                    .AddSqlServer(name: "DataBase From Sql Server",connectionString: connectionString)
+                    .AddSqlServer(name: "DataBase From Sql Server", connectionString: connectionString)
                     .AddHangfire(opttions =>
                     {
                         opttions.MinimumAvailableServers = 1;
-                    },name: "HangFire")
-                    .AddUrlGroup(name: "google Api", uri:new Uri("https://www.google.com"), tags: ["api"]) // Tag-Optional
-                    .AddUrlGroup(name: "facebook Api", uri:new Uri("https://www.facebook.com"), tags: ["api"])
+                    }, name: "HangFire")
+                    .AddUrlGroup(name: "google Api", uri: new Uri("https://www.google.com"), tags: ["api"]) // Tag-Optional
+                    .AddUrlGroup(name: "facebook Api", uri: new Uri("https://www.facebook.com"), tags: ["api"])
                     .AddCheck<MailHealthCheck>(name: "Mail Health Check");
             return services;
         }
@@ -323,7 +330,7 @@ namespace SurveyBasket.Api
                 // 5- Ip Adress
                 ratelimitConfig.AddPolicy(RateLimitConst.ipAddress, httpContext =>
                     RateLimitPartition.GetFixedWindowLimiter(
-                        partitionKey:httpContext.Connection.RemoteIpAddress?.ToString(),
+                        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString(),
                         factory: _ => new FixedWindowRateLimiterOptions
                         {
                             PermitLimit = 2,
@@ -358,13 +365,61 @@ namespace SurveyBasket.Api
                                             //new UrlSegmentApiVersionReader(),
                                             //new QueryStringApiVersionReader("api-version"),
                                             new HeaderApiVersionReader("api-version")
-                                            //new MediaTypeApiVersionReader("v")
+                                        //new MediaTypeApiVersionReader("v")
                                         );
             }).AddApiExplorer(option =>
             {
                 option.GroupNameFormat = "'v'V";
                 option.SubstituteApiVersionInUrl = true;
             });
+            return services;
+        }
+        private static IServiceCollection AddOpenApiConfig(this IServiceCollection services)
+        {
+            // Singel
+            //services.AddOpenApi(options =>
+            //{
+            //    options.AddDocumentTransformer((document, context, CancellationToken) =>
+            //    {
+            //        document.Info = new ()
+            //        {
+            //            Title = "Api Document",
+            //            Version = "V1",
+            //            Description = "Api Description"
+            //        };
+            //        return Task.CompletedTask;
+            //    });
+
+            //    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+            //});
+
+            // Add Auth To Open Doc
+            //services.AddAuthorization(option =>
+            //{
+            //    option.AddPolicy("ApiDocAuth", b => b.RequireRole(DefaultRoles.Admin));
+            //});
+
+            //Add Version
+            var serviceProvider = services.BuildServiceProvider();
+            var apiVersionDescriptionProvider = serviceProvider.GetRequiredService<IApiVersionDescriptionProvider>();
+            foreach (var description in apiVersionDescriptionProvider.ApiVersionDescriptions)
+            {
+                services.AddOpenApi(description.GroupName, options =>
+                {
+                    options.AddDocumentTransformer((document, context, CancellationToken) =>
+                    {
+                        document.Info = new()
+                        {
+                            Title = "Survey Basket API",
+                            Version = description.ApiVersion.ToString(),
+                            Description = $"API Description.{(description.IsDeprecated ? " This API version has been deprecated." : string.Empty)}",
+                        };
+                        return Task.CompletedTask;
+                    });
+
+                    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
+                });
+            }
             return services;
         }
     }

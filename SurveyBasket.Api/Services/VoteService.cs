@@ -20,7 +20,7 @@ namespace SurveyBasket.Api.Services
                                                   .Where(q => q.PollId == pollId && q.IsActive)
                                                   .Select(q => q.Id)
                                                   .ToListAsync();
-            if(!request.Answers.Select(r=>r.QuestionId).SequenceEqual(availableQuestion))
+            if (!request.Answers.Select(r => r.QuestionId).SequenceEqual(availableQuestion))
                 return Result.Failure(VoteErrors.InvalidQuestions);
 
             //Todo check answer Id
@@ -31,9 +31,9 @@ namespace SurveyBasket.Api.Services
                 UserId = userId,
                 VoteAnswers = request.Answers.Adapt<IEnumerable<VoteAnswer>>().ToList(),
                 SubmittedOn = DateTime.UtcNow,
-                
+
             };
-            await _context.Votes.AddAsync(vote,cancellationToken);
+            await _context.Votes.AddAsync(vote, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
             return Result.Success();
         }

@@ -1,6 +1,6 @@
 ﻿namespace SurveyBasket.Api.Abstractions
 {
-    public class PageList<T>(IList<T> items,int pageNumber,int count ,int pageSize)
+    public class PageList<T>(IList<T> items, int pageNumber, int count, int pageSize)
     {
         public IList<T> Items { get; private set; } = items;
         public int PageNumber { get; private set; } = pageNumber;
@@ -10,11 +10,11 @@
         public bool HasNextPage => PageNumber < TotalPages;
 
 
-        public static async Task<PageList<T>> CreateAsync(IQueryable<T> source , int pageNumber,int pageSize,CancellationToken cancellationToken = default)
+        public static async Task<PageList<T>> CreateAsync(IQueryable<T> source, int pageNumber, int pageSize, CancellationToken cancellationToken = default)
         {
             var count = await source.CountAsync(cancellationToken);
             var items = await source.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);
-            return new PageList<T>(items,pageNumber,count,pageSize);
+            return new PageList<T>(items, pageNumber, count, pageSize);
         }
     }
 }

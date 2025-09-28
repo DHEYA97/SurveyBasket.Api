@@ -1,9 +1,19 @@
-@SurveyBasket.Api_HostAddress = https://localhost:7175
+@base_url = https://localhost:7175
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2ZGM2NTI4YS1iMjgwLTQ3NzAtOWVhZS04MjY3MWVlODFlZjciLCJlbWFpbCI6ImFkbWluQHN1cnZleS1iYXNrZXQuY29tIiwiZ2l2ZW5fbmFtZSI6IlN1cnZleSBCYXNrZXQiLCJmYW1pbHlfbmFtZSI6IkFkbWluIiwianRpIjoiMmVjYzFkY2ItMDFkNi00ZTJmLWIwYjQtNTAyYWE5YTM0Njk3Iiwicm9sZXMiOlsiQWRtaW4iXSwicGVybWlzc2lvbnMiOlsicG9sbHM6YWRkIiwicG9sbHM6ZGVsZXRlIiwicG9sbHM6cmVhZCIsInBvbGxzOnVwZGF0ZSIsInF1ZXN0aW9uczphZGQiLCJxdWVzdGlvbnM6cmVhZCIsInF1ZXN0aW9uczp1cGRhdGUiLCJyZXN1bHRzOnJlYWQiLCJyb2xlczphZGQiLCJyb2xlczpyZWFkIiwicm9sZXM6dXBkYXRlIiwidXNlcnM6YWRkIiwidXNlcnM6cmVhZCIsInVzZXJzOnVwZGF0ZSJdLCJleHAiOjE3NTg3OTI3MjksImlzcyI6IlN1cnZleUJhc2tldEFwcCIsImF1ZCI6IlN1cnZleUJhc2tldEFwcCB1c2VyIn0.wWs-_5E3F3GDRmztXtJ_3hku-C9gHDZHAqAp0RGfnf8
 
+###
+POST {{base_url}}/auth/login
+Authorization: Bearer {{$bearerToken}}
+Content-Type: application/json
 
+{
+  "email" : "admin@survey-basket.com",
+   "password":"P@ssword123"
+}
 
 ###
 
-GET {{SurveyBasket.Api_HostAddress}}/api/polls
+GET {{base_url}}/api/polls/current
+Authorization: Bearer {{token}}
 
 ###

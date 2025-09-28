@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SurveyBasket.Api.Abstractions.Consts;
 
 namespace SurveyBasket.Api.Persistence.EntitiesConfiguration
 {
@@ -13,10 +12,9 @@ namespace SurveyBasket.Api.Persistence.EntitiesConfiguration
                    .HasForeignKey("UserId");
 
             builder.Property(u => u.FirstName).HasMaxLength(100);
-            builder.Property(u=>u.LastName).HasMaxLength(100);
+            builder.Property(u => u.LastName).HasMaxLength(100);
 
             //Seeding data
-            var passwordHasher = new PasswordHasher<ApplicationUser>();
             builder.HasData(
                 new ApplicationUser
                 {
@@ -29,7 +27,7 @@ namespace SurveyBasket.Api.Persistence.EntitiesConfiguration
                     NormalizedEmail = DefaultUsers.AdminEmail.ToUpper(),
                     SecurityStamp = DefaultUsers.AdminSecurityStamp,
                     ConcurrencyStamp = DefaultUsers.AdminConcurrencyStamp,
-                    PasswordHash = passwordHasher.HashPassword(null!,DefaultUsers.AdminPassword),
+                    PasswordHash = DefaultUsers.AdminPasswordHash,
                     EmailConfirmed = true
                 }
                 );

@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using SurveyBasket.Api.Contract.Roles;
+﻿using SurveyBasket.Api.Contract.Roles;
 
 namespace SurveyBasket.Api.Controllers
 {
@@ -12,16 +10,16 @@ namespace SurveyBasket.Api.Controllers
 
         [HttpGet("")]
         [HasPermission(Permissions.GetRoles)]
-        public async Task<IActionResult> GetAllRoles([FromQuery] bool isIncludeDeleted ,CancellationToken cancellationToken)
+        public async Task<IActionResult> GetAllRoles([FromQuery] bool isIncludeDeleted, CancellationToken cancellationToken)
         {
-            var result = await _roleService.GetAllRolesAsync(isIncludeDeleted,cancellationToken);
+            var result = await _roleService.GetAllRolesAsync(isIncludeDeleted, cancellationToken);
             return Ok(result);
         }
         [HttpGet("{roleId}")]
         [HasPermission(Permissions.GetRoles)]
-        public async Task<IActionResult> GetRoleById([FromRoute] string roleId,CancellationToken cancellationToken)
+        public async Task<IActionResult> GetRoleById([FromRoute] string roleId, CancellationToken cancellationToken)
         {
-            var result = await _roleService.GetRoleByIdAsync(roleId,cancellationToken);
+            var result = await _roleService.GetRoleByIdAsync(roleId, cancellationToken);
             return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
         }
         [HttpPost("")]
@@ -29,13 +27,13 @@ namespace SurveyBasket.Api.Controllers
         public async Task<IActionResult> AddRoleById([FromBody] RoleWithPermissionsRequest request, CancellationToken cancellationToken)
         {
             var result = await _roleService.AddRolesAsync(request, cancellationToken);
-            return result.IsSuccess ? CreatedAtAction(nameof(GetRoleById),new { roleId = result.Value.Id },result.Value) : result.ToProblem();
+            return result.IsSuccess ? CreatedAtAction(nameof(GetRoleById), new { roleId = result.Value.Id }, result.Value) : result.ToProblem();
         }
         [HttpPut("{roleId}")]
         [HasPermission(Permissions.UpdateRoles)]
-        public async Task<IActionResult> UpdateRole([FromRoute]string roleId, [FromBody] RoleWithPermissionsRequest request, CancellationToken cancellationToken)
+        public async Task<IActionResult> UpdateRole([FromRoute] string roleId, [FromBody] RoleWithPermissionsRequest request, CancellationToken cancellationToken)
         {
-            var result = await _roleService.UpdateRolesAsync(roleId,request, cancellationToken);
+            var result = await _roleService.UpdateRolesAsync(roleId, request, cancellationToken);
             return result.IsSuccess ? NoContent() : result.ToProblem();
         }
         [HttpPut("{roleId}/toggle-status")]

@@ -1,5 +1,4 @@
-﻿using SurveyBasket.Api.Contract.Question;
-using SurveyBasket.Api.Contract.Vote;
+﻿using SurveyBasket.Api.Contract.Vote;
 
 namespace SurveyBasket.Api.Services
 {

@@ -1,8 +1,6 @@
 ﻿
 using Microsoft.Extensions.Caching.Hybrid;
-using Microsoft.Extensions.Caching.Memory;
 using SurveyBasket.Api.Contract.Common;
-using SurveyBasket.Api.Contract.Poll;
 using SurveyBasket.Api.Contract.Question;
 using SurveyBasket.Api.Persistence;
 using System.Linq.Dynamic.Core;
@@ -20,7 +18,7 @@ namespace SurveyBasket.Api.Services
     {
         private readonly ApplicationDbContext _context = context;
         private readonly HybridCache _cache = cache;
-        
+
         //private readonly ICacheService _cacheService = cacheService;
         //private readonly IOutputCacheStore _outputCache = outputCache;
         //private readonly IMemoryCache _memoryCache = memoryCache;
@@ -53,7 +51,7 @@ namespace SurveyBasket.Api.Services
         }
         public async Task<Result<IEnumerable<QuestionResponse>>> GetAllAsync(int pollId, CancellationToken cancellationToken = default)
         {
-            var cacheKey = $"{cachePrefix}{pollId}"; 
+            var cacheKey = $"{cachePrefix}{pollId}";
 
             var isPollExist = await _context.Polls.FindAsync(pollId, cancellationToken);
             if (isPollExist is null)
@@ -109,11 +107,11 @@ namespace SurveyBasket.Api.Services
 
             if (questions!.Any())
                 return Result.Success<IEnumerable<QuestionResponse>>(questions!);
-            
+
             return Result.Failure<IEnumerable<QuestionResponse>>(QuestionErrors.QuestionNotFound);
 
         }
-        public async Task<Result<PageList<QuestionResponse>>> GetAllWithPaginationAsync(int pollId, FilterResponse filter,CancellationToken cancellationToken = default)
+        public async Task<Result<PageList<QuestionResponse>>> GetAllWithPaginationAsync(int pollId, FilterResponse filter, CancellationToken cancellationToken = default)
         {
 
             var isPollExist = await _context.Polls.FindAsync(pollId, cancellationToken);
@@ -130,19 +128,19 @@ namespace SurveyBasket.Api.Services
             {
                 query = query.OrderBy($"{filter.SortColumn} {filter.SortDirection}");
             }
-           var  source = query.Include(q => q.Answers)
-                                .Select(q => new QuestionResponse
-                                (
-                                    q.Id,
-                                    q.Content,
-                                    q.Answers.Where(a => a.IsActive).Select(a => new AnswerResponse
-                                    (
-                                        a.Id,
-                                        a.Content,
-                                        a.IsActive
-                                    ))
-                                ))
-                                .AsNoTracking();
+            var source = query.Include(q => q.Answers)
+                                 .Select(q => new QuestionResponse
+                                 (
+                                     q.Id,
+                                     q.Content,
+                                     q.Answers.Where(a => a.IsActive).Select(a => new AnswerResponse
+                                     (
+                                         a.Id,
+                                         a.Content,
+                                         a.IsActive
+                                     ))
+                                 ))
+                                 .AsNoTracking();
 
             var questions = await PageList<QuestionResponse>.CreateAsync(source, filter.PageNumber, filter.PageSize, cancellationToken);
 
@@ -154,11 +152,11 @@ namespace SurveyBasket.Api.Services
         }
         public async Task<Result<IEnumerable<QuestionResponse>>> GetAvailableAsync(int pollId, string userId, CancellationToken cancellationToken = default)
         {
-            var hasVote = await _context.Votes.AnyAsync(v => v.PollId == pollId && v.UserId == userId,cancellationToken);
-            if (hasVote) 
+            var hasVote = await _context.Votes.AnyAsync(v => v.PollId == pollId && v.UserId == userId, cancellationToken);
+            if (hasVote)
                 return Result.Failure<IEnumerable<QuestionResponse>>(VoteErrors.DuplicatedVote);
             var isExistPoll = await _context.Polls.AnyAsync(p => p.Id == pollId && p.IsPublished && p.StartAt <= DateOnly.FromDateTime(DateTime.UtcNow) && p.EndAt >= DateOnly.FromDateTime(DateTime.UtcNow));
-            if(!isExistPoll)
+            if (!isExistPoll)
                 return Result.Failure<IEnumerable<QuestionResponse>>(PollErrors.PollNotFound);
             var questions = await _context.Questions
                                           .Where(q => q.PollId == pollId && q.IsActive)
@@ -166,8 +164,8 @@ namespace SurveyBasket.Api.Services
                                           .Select(q => new QuestionResponse(
                                                                     q.Id,
                                                                     q.Content,
-                                                                    q.Answers.Where(a=>a.IsActive)
-                                                                     .Select(a=>new AnswerResponse(a.Id,a.Content,a.IsActive))
+                                                                    q.Answers.Where(a => a.IsActive)
+                                                                     .Select(a => new AnswerResponse(a.Id, a.Content, a.IsActive))
                                                                      ))
                                           .AsNoTracking()
                                           .ToListAsync(cancellationToken);

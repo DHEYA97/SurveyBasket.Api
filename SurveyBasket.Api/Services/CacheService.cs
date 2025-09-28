@@ -15,12 +15,12 @@ namespace SurveyBasket.Api.Services
         public async Task SetAsync<T>(string key, T Value, CancellationToken cancellationToken) where T : class
         {
             var value = await GetAsync<T>(key, cancellationToken);
-            if(value is null)
-                await _distributedCache.SetStringAsync(key,JsonSerializer.Serialize(value),cancellationToken);
+            if (value is null)
+                await _distributedCache.SetStringAsync(key, JsonSerializer.Serialize(value), cancellationToken);
         }
         public async Task RemoveAsync(string key, CancellationToken cancellationToken)
         {
-           await _distributedCache.RemoveAsync(key, cancellationToken);
+            await _distributedCache.RemoveAsync(key, cancellationToken);
         }
     }
 }

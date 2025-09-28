@@ -6,5 +6,5 @@
         bool IsDeleted,
         IList<string> Permissions
         );
-    
+
 }

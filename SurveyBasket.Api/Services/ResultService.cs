@@ -1,8 +1,5 @@
-﻿using SurveyBasket.Api.Contract.Poll;
-using SurveyBasket.Api.Contract.Result;
+﻿using SurveyBasket.Api.Contract.Result;
 using SurveyBasket.Api.Persistence;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace SurveyBasket.Api.Services
 {
@@ -19,16 +16,16 @@ namespace SurveyBasket.Api.Services
                                             .Where(v => v.Id == pollId)
                                             .Select(v => new PollsVoteResponse(
                                                     v.Title,
-                                                    v.Votes.Select(v=> new VoteByPollResponse(
+                                                    v.Votes.Select(v => new VoteByPollResponse(
                                                            $"{v.User.FirstName} {v.User.LastName}",
                                                                 v.SubmittedOn,
-                                                                v.VoteAnswers.Select(a=>new SelectedAnswersResponse(
+                                                                v.VoteAnswers.Select(a => new SelectedAnswersResponse(
                                                                     a.Question.Content,
                                                                     a.Answer.Content
                                                                 ))
                                                         )
                                                 ))).SingleOrDefaultAsync(cancellationToken);
-            if(votesInPoll is null)
+            if (votesInPoll is null)
                 return Result.Failure<PollsVoteResponse>(VoteErrors.VoteNotFound);
             return Result.Success(votesInPoll);
         }
@@ -36,17 +33,17 @@ namespace SurveyBasket.Api.Services
         {
             var pollResponse = await _context.Polls.FindAsync(pollId, cancellationToken);
             if (pollResponse is null)
-                return Result.Failure< IEnumerable <VotesPerDate>> (PollErrors.PollNotFound);
+                return Result.Failure<IEnumerable<VotesPerDate>>(PollErrors.PollNotFound);
 
             var votesBerDay = await _context.Votes
                                             .Where(v => v.Poll.Id == pollId)
-                                            .GroupBy(v=> new {Date = DateOnly.FromDateTime(v.SubmittedOn)})
-                                            .Select(v=> new VotesPerDate(
+                                            .GroupBy(v => new { Date = DateOnly.FromDateTime(v.SubmittedOn) })
+                                            .Select(v => new VotesPerDate(
                                                 v.Key.Date,
                                                 v.Count()
                                                 )).ToListAsync(cancellationToken);
             if (votesBerDay is null)
-                return Result.Failure<IEnumerable<VotesPerDate>> (VoteErrors.VoteNotFound);
+                return Result.Failure<IEnumerable<VotesPerDate>>(VoteErrors.VoteNotFound);
             return Result.Success<IEnumerable<VotesPerDate>>(votesBerDay);
         }
         public async Task<Result<IEnumerable<PollsQuestionAnswerCountResponse>>> GetQuestionCountAsync(int pollId, CancellationToken cancellationToken)

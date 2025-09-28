@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-
-namespace SurveyBasket.Api.Controllers
+﻿namespace SurveyBasket.Api.Controllers
 {
     [Route("api/polls/{pollId}/result")]
     [ApiController]
@@ -11,18 +7,18 @@ namespace SurveyBasket.Api.Controllers
     {
         private readonly IResultService _resultService = resultService;
         [HttpGet]
-        public async Task<IActionResult> GetPollVotes([FromRoute]int pollId,CancellationToken cancellationToken)
+        public async Task<IActionResult> GetPollVotes([FromRoute] int pollId, CancellationToken cancellationToken)
         {
             var pollVotes = await _resultService.GetResultByPollIdAsync(pollId, cancellationToken);
             return pollVotes.IsSuccess ? Ok(pollVotes.Value) : pollVotes.ToProblem();
         }
-        [HttpGet("perDay")]
+        [HttpGet("per-day")]
         public async Task<IActionResult> GetPollVotesPerday([FromRoute] int pollId, CancellationToken cancellationToken)
         {
             var pollVotes = await _resultService.GetResultPerDayAsync(pollId, cancellationToken);
             return pollVotes.IsSuccess ? Ok(pollVotes.Value) : pollVotes.ToProblem();
         }
-        [HttpGet("perQuestion")]
+        [HttpGet("per-question")]
         public async Task<IActionResult> GetVotesPerQuestion([FromRoute] int pollId, CancellationToken cancellationToken)
         {
             var pollVotes = await _resultService.GetQuestionCountAsync(pollId, cancellationToken);

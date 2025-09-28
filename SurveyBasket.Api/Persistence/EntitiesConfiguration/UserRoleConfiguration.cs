@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SurveyBasket.Api.Abstractions.Consts;
+﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace SurveyBasket.Api.Persistence.EntitiesConfiguration
 {
@@ -12,10 +10,11 @@ namespace SurveyBasket.Api.Persistence.EntitiesConfiguration
             //Seeding data
 
             builder.HasData(
-                     new IdentityUserRole<string>{
-                           UserId = DefaultUsers.AdminId,
-                           RoleId = DefaultRoles.AdminRoleId
-                       }
+                     new IdentityUserRole<string>
+                     {
+                         UserId = DefaultUsers.AdminId,
+                         RoleId = DefaultRoles.AdminRoleId
+                     }
                 );
         }
     }

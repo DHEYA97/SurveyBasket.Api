@@ -1,7 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using SurveyBasket.Api.Contract.Auth.User;
+﻿using SurveyBasket.Api.Contract.Auth.User;
 using SurveyBasket.Api.Extensions;
 
 namespace SurveyBasket.Api.Controllers

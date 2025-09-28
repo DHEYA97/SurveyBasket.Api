@@ -1,6 +1,4 @@
-﻿using SurveyBasket.Api.Abstractions.Consts;
-
-namespace SurveyBasket.Api.Contract.Auth.Register
+﻿namespace SurveyBasket.Api.Contract.Auth.Register
 {
     public class RegisterRequestValidation : AbstractValidator<RegisterRequest>
     {

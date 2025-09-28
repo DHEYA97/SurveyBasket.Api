@@ -1,10 +1,10 @@
 ﻿namespace SurveyBasket.Api.Errors
 {
-    public class UserErrors
+    public record UserErrors
     {
-       
+
         public static readonly Error InvalidCredentials =
-            new("User.InvalidCredentials", "Invalid email/password",StatusCodes.Status400BadRequest);
+            new("User.InvalidCredentials", "Invalid email/password", StatusCodes.Status400BadRequest);
 
         public static readonly Error InvalidRole =
            new("User.InvalidRole", "Invalid Role", StatusCodes.Status400BadRequest);
@@ -23,7 +23,7 @@
 
         public static readonly Error InvalidRefreshToken =
             new("User.InvalidRefreshToken", "Invalid refresh token", StatusCodes.Status400BadRequest);
-       
+
         public static readonly Error DuplicatedEmail =
             new("User.DuplicatedEmail", "Another user with the same email is already exists", StatusCodes.Status409Conflict);
 

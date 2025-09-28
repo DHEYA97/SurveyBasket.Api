@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using SurveyBasket.Api.Abstractions.Consts;
 
 namespace SurveyBasket.Api.Persistence.EntitiesConfiguration
 {
@@ -7,9 +6,9 @@ namespace SurveyBasket.Api.Persistence.EntitiesConfiguration
     {
         public void Configure(EntityTypeBuilder<ApplicationRole> builder)
         {
-            
+
             //Seeding data
-            
+
             builder.HasData(
                    [
                        new ApplicationRole{

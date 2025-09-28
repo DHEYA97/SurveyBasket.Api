@@ -6,7 +6,7 @@
         {
             RuleFor(x => x.Name)
                    .NotEmpty();
-            
+
             RuleFor(x => x.Permissions)
                 .NotNull()
                 .NotEmpty();

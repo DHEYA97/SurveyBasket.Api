@@ -22,8 +22,8 @@
         public const string UpdateRoles = "roles:update";
 
         public const string Results = "results:read";
-        
-        public static IList<string?> GetAllPermissions()=>
+
+        public static IList<string?> GetAllPermissions() =>
             typeof(Permissions).GetFields().Select(f => f.GetValue(f) as string).ToList();
 
     }

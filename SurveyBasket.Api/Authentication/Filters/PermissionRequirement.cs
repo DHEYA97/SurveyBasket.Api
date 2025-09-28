@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
-
-namespace SurveyBasket.Api.Authentication.Filters
+﻿namespace SurveyBasket.Api.Authentication.Filters
 {
     public class PermissionRequirement(string permission) : IAuthorizationRequirement
     {

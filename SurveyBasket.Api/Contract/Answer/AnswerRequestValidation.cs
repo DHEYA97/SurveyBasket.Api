@@ -12,6 +12,6 @@ namespace SurveyBasket.Api.Contract.Question
 
         }
 
-        
+
     }
 }

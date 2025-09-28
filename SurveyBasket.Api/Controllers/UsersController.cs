@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using SurveyBasket.Api.Contract.Auth.User;
+﻿using SurveyBasket.Api.Contract.Auth.User;
 
 namespace SurveyBasket.Api.Controllers
 {
@@ -17,9 +15,9 @@ namespace SurveyBasket.Api.Controllers
         }
         [HttpGet("{userId}")]
         [HasPermission(Permissions.GetUsers)]
-        public async Task<IActionResult> GetUserDetails([FromRoute]string userId ,CancellationToken cancellationToken)
+        public async Task<IActionResult> GetUserDetails([FromRoute] string userId, CancellationToken cancellationToken)
         {
-            var result = await _userService.GetUserDetailsAsync(userId,cancellationToken);
+            var result = await _userService.GetUserDetailsAsync(userId, cancellationToken);
             return result.IsSuccess ? Ok(result.Value) : result.ToProblem();
         }
         [HttpPost("")]
@@ -27,13 +25,13 @@ namespace SurveyBasket.Api.Controllers
         public async Task<IActionResult> AddUser(AddUserRequest request, CancellationToken cancellationToken = default)
         {
             var result = await _userService.AddUserAsync(request, cancellationToken);
-            return result.IsSuccess ? CreatedAtAction(nameof(GetUserDetails), new { userId =  result.Value.Id }, result.Value) : result.ToProblem();
+            return result.IsSuccess ? CreatedAtAction(nameof(GetUserDetails), new { userId = result.Value.Id }, result.Value) : result.ToProblem();
         }
         [HttpPut("{userId}")]
         [HasPermission(Permissions.UpdateUsers)]
-        public async Task<IActionResult> UpdateUser([FromRoute] string userId,UpdateUserRequest request, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UpdateUser([FromRoute] string userId, UpdateUserRequest request, CancellationToken cancellationToken = default)
         {
-            var result = await _userService.UpdateUserAsync(userId,request, cancellationToken);
+            var result = await _userService.UpdateUserAsync(userId, request, cancellationToken);
             return result.IsSuccess ? NoContent() : result.ToProblem();
         }
         [HttpPut("{userId}/toggle-status")]
@@ -45,7 +43,7 @@ namespace SurveyBasket.Api.Controllers
         }
         [HttpPut("{userId}/unlock")]
         [HasPermission(Permissions.UpdateUsers)]
-        public async Task<IActionResult> UnlockUser([FromRoute] string userId,  CancellationToken cancellationToken = default)
+        public async Task<IActionResult> UnlockUser([FromRoute] string userId, CancellationToken cancellationToken = default)
         {
             var result = await _userService.UnLockAsync(userId, cancellationToken);
             return result.IsSuccess ? NoContent() : result.ToProblem();

@@ -7,7 +7,7 @@ using SurveyBasket.Api.Settinges;
 
 namespace SurveyBasket.Api.Services
 {
-    public class EmailService(IOptions<MailSetting> mailSettings,ILogger<EmailService> logger) : IEmailSender
+    public class EmailService(IOptions<MailSetting> mailSettings, ILogger<EmailService> logger) : IEmailSender
     {
         private readonly MailSetting _mailSettings = mailSettings.Value;
         private readonly ILogger<EmailService> _logger = logger;
@@ -19,7 +19,7 @@ namespace SurveyBasket.Api.Services
                 Sender = MailboxAddress.Parse(_mailSettings.Mail),
                 Subject = subject
             };
-            
+
             message.To.Add(MailboxAddress.Parse(email));
 
             var builder = new BodyBuilder
@@ -38,7 +38,7 @@ namespace SurveyBasket.Api.Services
                 await smtp.SendAsync(message);
                 smtp.Disconnect(true);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
 
             }

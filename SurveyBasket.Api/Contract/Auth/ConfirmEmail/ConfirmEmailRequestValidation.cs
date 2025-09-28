@@ -1,5 +1,4 @@
-﻿using SurveyBasket.Api.Abstractions.Consts;
-using SurveyBasket.Api.Contract.ConfirmEmail;
+﻿using SurveyBasket.Api.Contract.ConfirmEmail;
 
 namespace SurveyBasket.Api.Contract.Register
 {
@@ -9,7 +8,7 @@ namespace SurveyBasket.Api.Contract.Register
         {
             RuleFor(l => l.UserId)
                 .NotEmpty();
-            
+
             RuleFor(l => l.Code)
                 .NotEmpty();
         }

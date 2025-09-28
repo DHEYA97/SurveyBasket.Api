@@ -56,7 +56,7 @@ namespace SurveyBasket.Api.Controllers
         /// Revokes a refresh token to prevent further use.
         /// </summary>
         [HttpPost("revoke-refresh-token")]
-        [ProducesResponseType(typeof(AuthResponse),StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
         [ProducesDefaultResponseType(typeof(ProblemDetails))]
         public async Task<IActionResult> RevokeRefreshToken([FromBody] RefreshTokenRequest Request, CancellationToken cancellationToken = default)
